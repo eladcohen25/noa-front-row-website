@@ -67,8 +67,9 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
         const url = new URL(link.href)
         const path = url.pathname
         
-        // Only intercept internal navigation to different page
-        if (path !== pathname && path.startsWith('/')) {
+        // Only intercept internal navigation to different page (same origin only)
+        const isInternalLink = url.origin === window.location.origin
+        if (isInternalLink && path !== pathname && path.startsWith('/')) {
           e.preventDefault()
           e.stopPropagation()
           
