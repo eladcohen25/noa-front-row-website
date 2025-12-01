@@ -3,7 +3,7 @@ import ScrollReveal from '@/components/ScrollReveal'
 // ========================================
 // TICKETING LINK - Easy to update
 // ========================================
-const TICKETING_URL = 'https://tickets.thefrontrow.vegas' // Update this with actual ticketing link
+const TICKETING_URL = 'https://thefrontrow.ticketspice.com/the-front-row-a-style-experience'
 // ========================================
 
 export default function Tickets() {
