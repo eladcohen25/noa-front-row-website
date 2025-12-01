@@ -27,6 +27,10 @@ export default function RootLayout({
         <Script id="klaviyo-disable-autofill">
           {`try { window.__klaviyoDisableAutofill = true; } catch(e) {}`}
         </Script>
+        <Script
+          src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=S72EYZ"
+          strategy="lazyOnload"
+        />
 
         <Analytics />
         <SpeedInsights />

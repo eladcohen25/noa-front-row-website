@@ -34,7 +34,7 @@ export default function About() {
 
         <ScrollReveal>
           <p className="text-base leading-relaxed">
-            Every element crafted with intention, inviting guests to step inside a world rather than simply watch one. Crafted to be felt not just seen.
+            Every element curated with intention, inviting guests to step inside a world rather than simply watch one. Crafted to be felt not just seen.
           </p>
         </ScrollReveal>
       </div>
