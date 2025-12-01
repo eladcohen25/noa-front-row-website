@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { Analytics } from "@vercel/analytics/next"
 import './globals.css'
 import RootLayoutClient from './RootLayoutClient'
 
@@ -37,6 +38,7 @@ export default function RootLayout({
           src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=S72EYZ"
           strategy="lazyOnload"
         />
+        <Analytics />
       </body>
     </html>
   )
