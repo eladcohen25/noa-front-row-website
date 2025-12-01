@@ -6,23 +6,60 @@ import LeftNav from '@/components/LeftNav'
 import PageTransition from '@/components/PageTransition'
 import LogoHeader from '@/components/LogoHeader'
 import LoadingScreen from '@/components/LoadingScreen'
+import MobileEnterOverlay from '@/components/MobileEnterOverlay'
 
 export default function RootLayoutClient({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const isHome = pathname === '/'
+  const [isMobileDevice, setIsMobileDevice] = useState(false) // Track if mobile device
   const [isLoading, setIsLoading] = useState(true) // Start with loading true for initial load
   const [pageBlur, setPageBlur] = useState(0) // Blur value controlled around loader end
+  const [mobileEntered, setMobileEntered] = useState(false) // Track if user has entered on mobile
   const prevPathnameRef = useRef(pathname) // For debugging route changes
   const pendingNavigationRef = useRef<string | null>(null) // Store pending navigation
   const loaderKeyRef = useRef(0) // Stable key for loader (increments only on new navigation)
   const isInitialMount = useRef(true)
+  const isInitialLoadRef = useRef(true) // Track if this is the very first load
   const isLoadingRef = useRef(false) // Prevent double loading
   const blurTimeoutRef = useRef<number | null>(null) // Timeout for blur clear timing
 
+  // Detect mobile device on mount and skip initial loader on mobile
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const isMobile = window.matchMedia('(pointer: coarse)').matches
+    setIsMobileDevice(isMobile)
+    
+    // On mobile, skip the initial loader (Enter overlay handles the intro)
+    if (isMobile && isInitialLoadRef.current) {
+      console.log('📱 Mobile: Skipping initial loader, Enter overlay will handle intro')
+      setIsLoading(false)
+      isLoadingRef.current = false
+    }
+    
+    isInitialLoadRef.current = false
+  }, [])
+
   // Intercept navigation clicks
   useEffect(() => {
+    // Track if we've already handled a navigation to prevent double-firing
+    let navigationHandled = false
+
     const handleLinkClick = (e: MouseEvent) => {
+      // Skip if already loading
+      if (isLoadingRef.current) {
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
+      
+      // Skip if navigation was already handled (prevents double-firing)
+      if (navigationHandled) {
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
+
       const target = e.target as HTMLElement
       const link = target.closest('a[href]') as HTMLAnchorElement
       
@@ -30,31 +67,46 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
         const url = new URL(link.href)
         const path = url.pathname
         
-        // Only intercept internal navigation
-        if (path !== pathname && path.startsWith('/') && !isLoadingRef.current) {
+        // Only intercept internal navigation to different page
+        if (path !== pathname && path.startsWith('/')) {
           e.preventDefault()
           e.stopPropagation()
           
-          console.log('🔗 Navigation intercepted:', pathname, '→', path)
-          // Store pending navigation
-          pendingNavigationRef.current = path
+          // Mark navigation as handled to prevent double-firing
+          navigationHandled = true
+          setTimeout(() => { navigationHandled = false }, 100)
           
-          // Increment loader key for new navigation (prevents remount on pathname change)
+          // Check if mobile
+          const isMobile = window.matchMedia('(pointer: coarse)').matches
+          
+          console.log(isMobile ? '📱 Mobile navigation:' : '🖥️ Desktop navigation:', pathname, '→', path)
+          
+          // Increment loader key for new navigation
           loaderKeyRef.current += 1
           
-          // Start loader immediately (current page stays visible under loader)
+          // Start loader immediately
           isLoadingRef.current = true
           setIsLoading(true)
-          setPageBlur(0) // Reset blur
+          setPageBlur(0)
           
-          console.log('🎬 Loader started - old page should stay visible')
+          if (isMobile) {
+            // Mobile: Navigate IMMEDIATELY, loader plays on top
+            router.push(path)
+            console.log('📱 Mobile: router.push called immediately')
+          } else {
+            // Desktop: Store for delayed navigation at 50%
+            pendingNavigationRef.current = path
+            console.log('🖥️ Desktop: navigation stored for 50% callback')
+          }
         }
       }
     }
 
     document.addEventListener('click', handleLinkClick, true)
-    return () => document.removeEventListener('click', handleLinkClick, true)
-  }, [pathname, children])
+    return () => {
+      document.removeEventListener('click', handleLinkClick, true)
+    }
+  }, [pathname, router])
 
   useEffect(() => {
     // Skip the initial mount
@@ -67,21 +119,11 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
     // Handle route change when navigation executes at 50%
     // This happens after we call router.push in handleFiftyPercent
     if (pathname !== prevPathnameRef.current) {
-      // If we're already loading, this is the expected navigation at 50%
-      if (isLoadingRef.current) {
-        console.log('🔀 Route changed during loader (expected at 50%):', prevPathnameRef.current, '→', pathname)
-        prevPathnameRef.current = pathname
-        // Don't restart loader, just update the pathname
-      } else {
-        // Unexpected route change (shouldn't happen with interception)
-        console.log('⚠️ UNEXPECTED route change:', prevPathnameRef.current, '→', pathname)
-        isLoadingRef.current = true
-        setIsLoading(true)
-        setPageBlur(0)
-        prevPathnameRef.current = pathname
-      }
+      console.log('🔀 Route changed:', prevPathnameRef.current, '→', pathname, 'isLoading:', isLoadingRef.current)
+      prevPathnameRef.current = pathname
+      // NEVER restart loader on pathname change - only the click handler should start it
     }
-  }, [pathname, children, isLoading])
+  }, [pathname])
 
   const handleFiftyPercent = useCallback(() => {
     console.log('✅ 50% - Heart filled screen, swapping to new page')
@@ -123,8 +165,26 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
     // At this point blur should already be at 0 from handleScaleDownStart timer
   }, [])
 
+  // Handler for when user taps "Enter" on mobile overlay
+  const handleMobileEnter = useCallback(() => {
+    setMobileEntered(true)
+    
+    // Trigger video playback for all videos on the page
+    // This ensures videos start playing after user interaction (required by iOS)
+    const videos = document.querySelectorAll('video')
+    videos.forEach((video) => {
+      video.muted = true
+      video.play().catch(() => {
+        // Autoplay blocked, fail silently
+      })
+    })
+  }, [])
+
   return (
     <div className="min-h-screen bg-white">
+      {/* Mobile Enter Overlay - only shows on mobile, first visit */}
+      <MobileEnterOverlay onEnter={handleMobileEnter} />
+
       {/* Loader overlay - always sits above current content */}
       {isLoading && (
         <LoadingScreen
@@ -144,9 +204,13 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
           transition: 'filter 500ms cubic-bezier(0.25, 0.1, 0.25, 1)',
         }}
       >
+        {/* Navigation - handles its own mobile/desktop rendering */}
         <LeftNav />
-        <main className={pathname === '/' ? 'fixed inset-0' : 'ml-64'}>
-          {pathname !== '/' && <LogoHeader />}
+        
+        {/* Main content */}
+        <main className={pathname === '/' ? 'fixed inset-0' : 'ml-0 md:ml-64'}>
+          {/* Logo header - shows text on home, 3D video on other pages */}
+          <LogoHeader />
           <div>{children}</div>
         </main>
       </div>

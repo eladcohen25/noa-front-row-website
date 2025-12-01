@@ -10,6 +10,13 @@ interface LoadingScreenProps {
 
 export default function LoadingScreen({ onComplete, onFiftyPercent, onScaleDownStart }: LoadingScreenProps) {
   const [animationPhase, setAnimationPhase] = useState<'initial' | 'scale-up' | 'hold' | 'scale-down' | 'done'>('initial')
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setIsMobile(window.matchMedia('(max-width: 768px)').matches)
+  }, [])
 
   useEffect(() => {
     console.log('✅ LoadingScreen mounted - Animation starting')
@@ -96,34 +103,65 @@ export default function LoadingScreen({ onComplete, onFiftyPercent, onScaleDownS
         </div>
       </div>
 
-      {/* Spinning logo video - scales and fades with heart */}
+      {/* Logo - video on desktop, text on mobile */}
       <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-        <video
-          src="/Noa%203-D%20logo.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-32 h-32 md:w-40 md:h-40 object-contain mix-blend-multiply"
-          style={{
-            transform: 
-              animationPhase === 'initial' ? 'scale(0.5)' :
-              animationPhase === 'scale-up' ? 'scale(1)' :
-              animationPhase === 'hold' ? 'scale(1)' :
-              animationPhase === 'scale-down' ? 'scale(0.5)' :
-              'scale(0.5)',
-            opacity:
-              animationPhase === 'initial' ? 0 :
-              animationPhase === 'scale-up' ? 1 :
-              animationPhase === 'hold' ? 1 :
-              animationPhase === 'scale-down' ? 0 :
-              0,
-            transition: 
-              animationPhase === 'scale-up' ? 'transform 1500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 1500ms ease-out' :
-              animationPhase === 'scale-down' ? 'transform 1500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 800ms ease-in' :
-              'none',
-          }}
-        />
+        {/* Desktop: 3D video */}
+        {!isMobile && (
+          <video
+            src="/Noa%203-D%20logo.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="w-40 h-40 object-contain mix-blend-multiply"
+            style={{
+              transform: 
+                animationPhase === 'initial' ? 'scale(0.5)' :
+                animationPhase === 'scale-up' ? 'scale(1)' :
+                animationPhase === 'hold' ? 'scale(1)' :
+                animationPhase === 'scale-down' ? 'scale(0.5)' :
+                'scale(0.5)',
+              opacity:
+                animationPhase === 'initial' ? 0 :
+                animationPhase === 'scale-up' ? 1 :
+                animationPhase === 'hold' ? 1 :
+                animationPhase === 'scale-down' ? 0 :
+                0,
+              transition: 
+                animationPhase === 'scale-up' ? 'transform 1500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 1500ms ease-out' :
+                animationPhase === 'scale-down' ? 'transform 1500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 800ms ease-in' :
+                'none',
+            }}
+          />
+        )}
+
+        {/* Mobile: TFR text logo */}
+        {isMobile && (
+          <div
+            className="font-la-foonte text-3xl tracking-tight text-black"
+            style={{
+              transform: 
+                animationPhase === 'initial' ? 'scale(0.5)' :
+                animationPhase === 'scale-up' ? 'scale(1)' :
+                animationPhase === 'hold' ? 'scale(1)' :
+                animationPhase === 'scale-down' ? 'scale(0.5)' :
+                'scale(0.5)',
+              opacity:
+                animationPhase === 'initial' ? 0 :
+                animationPhase === 'scale-up' ? 1 :
+                animationPhase === 'hold' ? 1 :
+                animationPhase === 'scale-down' ? 0 :
+                0,
+              transition: 
+                animationPhase === 'scale-up' ? 'transform 1500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 1500ms ease-out' :
+                animationPhase === 'scale-down' ? 'transform 1500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 800ms ease-in' :
+                'none',
+            }}
+          >
+            TFR
+          </div>
+        )}
       </div>
     </div>
   )
