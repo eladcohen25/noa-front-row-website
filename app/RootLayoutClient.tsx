@@ -90,15 +90,10 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
           setIsLoading(true)
           setPageBlur(0)
           
-          if (isMobile) {
-            // Mobile: Navigate IMMEDIATELY, loader plays on top
-            router.push(path)
-            console.log('📱 Mobile: router.push called immediately')
-          } else {
-            // Desktop: Store for delayed navigation at 50%
-            pendingNavigationRef.current = path
-            console.log('🖥️ Desktop: navigation stored for 50% callback')
-          }
+          // Both mobile and desktop: Store for delayed navigation at 50%
+          // This ensures the loader stays fully on screen before the page changes
+          pendingNavigationRef.current = path
+          console.log(isMobile ? '📱 Mobile:' : '🖥️ Desktop:', 'navigation stored for 50% callback')
         }
       }
     }
