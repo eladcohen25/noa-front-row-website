@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface KlaviyoSignupOverlayProps {
   isOpen: boolean
@@ -8,24 +8,67 @@ interface KlaviyoSignupOverlayProps {
 }
 
 export default function KlaviyoSignupOverlay({ isOpen, onClose }: KlaviyoSignupOverlayProps) {
+  const lastOpenTime = useRef(0)
+  
   useEffect(() => {
-    if (isOpen && typeof window !== 'undefined' && (window as any)._klOnsite) {
-      // Close any existing Klaviyo forms first
-      (window as any)._klOnsite.push(['closeForm', 'RpnBYt'])
+    if (!isOpen || typeof window === 'undefined') return
+    
+    // Prevent duplicate triggers within 500ms
+    const now = Date.now()
+    if (now - lastOpenTime.current < 500) return
+    lastOpenTime.current = now
+
+    const win = window as any
+    
+    const openForm = () => {
+      // Try _klOnsite first (standard method)
+      if (win._klOnsite) {
+        win._klOnsite.push(['openForm', 'RpnBYt'])
+        return true
+      }
       
-      // Wait a moment, then open the form
-      setTimeout(() => {
-        (window as any)._klOnsite.push(['openForm', 'RpnBYt'])
-      }, 50)
+      // Try klaviyo object (alternative method)
+      if (win.klaviyo) {
+        win.klaviyo.push(['openForm', 'RpnBYt'])
+        return true
+      }
       
-      // Reset the state so it can be triggered again
-      setTimeout(() => {
+      return false
+    }
+
+    // Try immediately
+    if (openForm()) {
+      // Reset state after a delay so button can be clicked again
+      setTimeout(onClose, 300)
+      return
+    }
+
+    // Retry mechanism for when Klaviyo hasn't loaded yet
+    let attempts = 0
+    const maxAttempts = 15
+    let timeoutId: NodeJS.Timeout
+    
+    const tryOpen = () => {
+      attempts++
+      if (openForm()) {
+        setTimeout(onClose, 300)
+        return
+      }
+      
+      if (attempts < maxAttempts) {
+        timeoutId = setTimeout(tryOpen, 150)
+      } else {
         onClose()
-      }, 150)
+      }
+    }
+    
+    timeoutId = setTimeout(tryOpen, 150)
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [isOpen, onClose])
 
-  // This component no longer renders anything - it just triggers Klaviyo
   return null
 }
 
