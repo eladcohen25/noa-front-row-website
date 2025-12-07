@@ -21,6 +21,14 @@ const partners = [
     name: 'Kérastase Paris', 
     image: '/Partners%20Page%20Logos/Kerastase-logo-1.png' 
   },
+  { 
+    name: 'Crown Affair', 
+    image: '/Partners%20Page%20Logos/crown%20affair.png' 
+  },
+  { 
+    name: 'AGLOW Media Collective', 
+    image: '/Partners%20Page%20Logos/AGLOW%20Media%20Collective.png' 
+  },
 ]
 // ========================================
 
