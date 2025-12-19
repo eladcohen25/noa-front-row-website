@@ -191,9 +191,6 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
         />
       )}
 
-      {/* Logo header - MUST be outside filtered container to stay truly fixed on mobile */}
-      <LogoHeader />
-
       {/* Single content tree - stays mounted; blur only applied after 50% on NEW page */}
       <div
         style={{
@@ -208,6 +205,8 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
         
         {/* Main content */}
         <main className={pathname === '/' ? 'fixed inset-0' : 'ml-0 md:ml-64'}>
+          {/* Logo header - shows text on home, 3D video on other pages */}
+          <LogoHeader />
           <div>{children}</div>
         </main>
       </div>
