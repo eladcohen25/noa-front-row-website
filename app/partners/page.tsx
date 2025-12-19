@@ -18,6 +18,18 @@ const partners = [
     image: '/Partners%20Page%20Logos/galindo%20logo.png' 
   },
   { 
+    name: 'Bonded Permanent Jewelry', 
+    image: '/Partners%20Page%20Logos/Bonded%20Permanent%20Jewelry.png' 
+  },
+  { 
+    name: 'Lights Off Media', 
+    image: '/Partners%20Page%20Logos/Lights%20Off%20Media.png' 
+  },
+  { 
+    name: 'AGLOW Media Collective', 
+    image: '/Partners%20Page%20Logos/AGLOW%20Media%20Collective.png' 
+  },
+  { 
     name: 'Kérastase Paris', 
     image: '/Partners%20Page%20Logos/Kerastase-logo-1.png' 
   },
@@ -26,8 +38,8 @@ const partners = [
     image: '/Partners%20Page%20Logos/crown%20affair.png' 
   },
   { 
-    name: 'AGLOW Media Collective', 
-    image: '/Partners%20Page%20Logos/AGLOW%20Media%20Collective.png' 
+    name: 'The Now', 
+    image: '/Partners%20Page%20Logos/The%20Now.png' 
   },
 ]
 // ========================================
