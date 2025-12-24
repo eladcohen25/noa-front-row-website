@@ -7,6 +7,7 @@ import PageTransition from '@/components/PageTransition'
 import LogoHeader from '@/components/LogoHeader'
 import LoadingScreen from '@/components/LoadingScreen'
 import MobileEnterOverlay from '@/components/MobileEnterOverlay'
+import CustomCursor from '@/components/CustomCursor'
 
 export default function RootLayoutClient({ children }: { children: ReactNode }) {
   const pathname = usePathname()
@@ -178,6 +179,9 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Custom cursor - hidden on mobile and respects reduced-motion */}
+      <CustomCursor />
+
       {/* Mobile Enter Overlay - only shows on mobile, first visit */}
       <MobileEnterOverlay onEnter={handleMobileEnter} />
 
