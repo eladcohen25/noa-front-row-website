@@ -30,6 +30,11 @@ const partners = [
     image: '/Partners%20Page%20Logos/AGLOW%20Media%20Collective.png' 
   },
   { 
+    name: 'TM Soak', 
+    image: '/Partners%20Page%20Logos/TM%20SOAK.png',
+    size: { width: 160, height: 120 }
+  },
+  { 
     name: 'Kérastase Paris', 
     image: '/Partners%20Page%20Logos/Kerastase-logo-1.png' 
   },
@@ -66,7 +71,13 @@ export default function Partners() {
             <ScrollReveal key={index}>
               <div className="flex flex-col items-center text-center">
                 {/* Logo */}
-                <div className="relative w-full max-w-[200px] h-[120px] mb-6">
+                <div 
+                  className="relative w-full mb-6"
+                  style={{ 
+                    maxWidth: partner.size?.width ? `${partner.size.width}px` : '200px',
+                    height: partner.size?.height ? `${partner.size.height}px` : '120px'
+                  }}
+                >
                   <Image
                     src={partner.image}
                     alt={partner.name}
