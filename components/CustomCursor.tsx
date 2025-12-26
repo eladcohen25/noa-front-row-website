@@ -7,11 +7,6 @@ export default function CustomCursor() {
   const [isHovering, setIsHovering] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [shouldRender, setShouldRender] = useState(false)
-  
-  // Mouse position refs for smooth animation
-  const mousePosition = useRef({ x: 0, y: 0 })
-  const cursorPosition = useRef({ x: 0, y: 0 })
-  const animationFrameRef = useRef<number>()
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -36,9 +31,11 @@ export default function CustomCursor() {
     document.documentElement.style.cursor = 'none'
     document.body.style.cursor = 'none'
 
-    // Track mouse position
+    // Track mouse position - instant update, no lag
     const handleMouseMove = (e: MouseEvent) => {
-      mousePosition.current = { x: e.clientX, y: e.clientY }
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`
+      }
       if (!isVisible) setIsVisible(true)
     }
 
@@ -68,24 +65,6 @@ export default function CustomCursor() {
       setIsVisible(true)
     }
 
-    // Smooth cursor animation with easing
-    const animateCursor = () => {
-      // Slow, refined easing factor (lower = smoother/slower)
-      const ease = 0.12
-      
-      cursorPosition.current.x += (mousePosition.current.x - cursorPosition.current.x) * ease
-      cursorPosition.current.y += (mousePosition.current.y - cursorPosition.current.y) * ease
-
-      if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate(${cursorPosition.current.x}px, ${cursorPosition.current.y}px) translate(-50%, -50%)`
-      }
-
-      animationFrameRef.current = requestAnimationFrame(animateCursor)
-    }
-
-    // Start animation loop
-    animationFrameRef.current = requestAnimationFrame(animateCursor)
-
     // Add event listeners
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseover', handleMouseOver)
@@ -104,10 +83,6 @@ export default function CustomCursor() {
       document.removeEventListener('mouseout', handleMouseOut)
       document.documentElement.removeEventListener('mouseleave', handleMouseLeave)
       document.documentElement.removeEventListener('mouseenter', handleMouseEnter)
-      
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
     }
   }, [isVisible])
 
@@ -119,15 +94,14 @@ export default function CustomCursor() {
       ref={cursorRef}
       className="pointer-events-none fixed top-0 left-0 z-[9999]"
       style={{
-        width: isHovering ? '48px' : '28px',
-        height: isHovering ? '48px' : '28px',
-        border: '1.5px solid white',
+        width: isHovering ? '28px' : '18px',
+        height: isHovering ? '28px' : '18px',
+        border: '1px solid white',
         borderRadius: '50%',
         backgroundColor: 'transparent',
         opacity: isVisible ? 1 : 0,
-        transition: 'width 0.4s cubic-bezier(0.25, 0.1, 0.25, 1), height 0.4s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.3s ease',
+        transition: 'width 0.2s ease, height 0.2s ease, opacity 0.15s ease',
         mixBlendMode: 'difference',
-        willChange: 'transform',
       }}
       aria-hidden="true"
     />
