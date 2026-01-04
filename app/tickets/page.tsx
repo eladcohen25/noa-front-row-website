@@ -3,6 +3,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import ScrollReveal from '@/components/ScrollReveal'
 
+// ========================================
+// PASSWORD GATE TOGGLE
+// Set to true to require password, false to go directly to tickets
+// ========================================
+const REQUIRE_PASSWORD = false
+// ========================================
+
 const ACCESS_CODE = 'INSIDETFR'
 const TICKETING_URL = 'https://tickets.thefrontrow.vegas/'
 
@@ -76,17 +83,23 @@ export default function Tickets() {
 
           <ScrollReveal>
             <button
-              onClick={handleOpenModal}
+              onClick={() => {
+                if (REQUIRE_PASSWORD) {
+                  handleOpenModal()
+                } else {
+                  window.open(TICKETING_URL, '_blank', 'noopener,noreferrer')
+                }
+              }}
               className="inline-block px-10 py-4 bg-black text-white text-sm tracking-widest uppercase transition-all duration-300 hover:bg-gray-900 hover:scale-[1.02]"
             >
-              Request Access
+              Buy Tickets
             </button>
           </ScrollReveal>
         </div>
       </div>
 
-      {/* Password Gate Modal */}
-      {isModalOpen && (
+      {/* Password Gate Modal - only renders when REQUIRE_PASSWORD is true */}
+      {REQUIRE_PASSWORD && isModalOpen && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ 
