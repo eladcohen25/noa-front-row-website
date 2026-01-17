@@ -22,12 +22,20 @@ const partners = [
     image: '/Partners%20Page%20Logos/Bonded%20Permanent%20Jewelry.png' 
   },
   { 
+    name: 'Highland Collection', 
+    image: '/Partners%20Page%20Logos/Highland%20Collection.png' 
+  },
+  { 
     name: 'Lights Off Media', 
     image: '/Partners%20Page%20Logos/Lights%20Off%20Media.png' 
   },
   { 
     name: 'AGLOW Media Collective', 
     image: '/Partners%20Page%20Logos/AGLOW%20Media%20Collective.png' 
+  },
+  { 
+    name: 'Skin with Katy', 
+    image: '/Partners%20Page%20Logos/Skin%20with%20Katy.png' 
   },
   { 
     name: 'TM Soak', 
@@ -45,6 +53,14 @@ const partners = [
   { 
     name: 'The Now', 
     image: '/Partners%20Page%20Logos/The%20Now.png' 
+  },
+  { 
+    name: 'Summer House', 
+    image: '/Partners%20Page%20Logos/Summer%20House%20logo.png' 
+  },
+  { 
+    name: 'Sephora', 
+    image: '/Partners%20Page%20Logos/Sephora.jpeg' 
   },
 ]
 // ========================================
