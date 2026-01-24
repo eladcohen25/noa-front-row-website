@@ -14,10 +14,6 @@ const partners = [
     image: '/Partners%20Page%20Logos/durango%20logo.png' 
   },
   { 
-    name: 'Galindo Group Real Estate', 
-    image: '/Partners%20Page%20Logos/galindo%20logo.png' 
-  },
-  { 
     name: 'Bonded Permanent Jewelry', 
     image: '/Partners%20Page%20Logos/Bonded%20Permanent%20Jewelry.png' 
   },
