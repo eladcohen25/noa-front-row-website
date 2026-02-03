@@ -7,10 +7,10 @@ import ScrollReveal from '@/components/ScrollReveal'
 // PASSWORD GATE TOGGLE
 // Set to true to require password, false to go directly to tickets
 // ========================================
-const REQUIRE_PASSWORD = false
+const REQUIRE_PASSWORD = true
 // ========================================
 
-const ACCESS_CODE = 'INSIDETFR'
+const ACCESS_CODE = 'TFR2026'
 const TICKETING_URL = 'https://tickets.thefrontrow.vegas/'
 
 const ERROR_MESSAGES = [
@@ -77,7 +77,7 @@ export default function Tickets() {
 
           <ScrollReveal>
             <p className="text-base leading-relaxed mb-10">
-              Debuting January 2026 — an immersive fashion event in Las Vegas where every guest holds a front-row seat to the future.
+              An immersive fashion event in Las Vegas where every guest holds a front-row seat to the future.
             </p>
           </ScrollReveal>
 

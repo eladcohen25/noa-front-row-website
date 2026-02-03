@@ -34,7 +34,9 @@ export default function About() {
 
         <ScrollReveal>
           <p className="text-base leading-relaxed">
-            Every element curated with intention, inviting guests to step inside a world rather than simply watch one. Crafted to be felt not just seen.
+            <span className="font-typekit-italic">The Front Row</span>
+            <br />
+            A fashion first event and cultural platform operating at the intersection of runway, beauty, and brand storytelling.
           </p>
         </ScrollReveal>
       </div>
@@ -67,7 +69,9 @@ export default function About() {
       <div className="max-w-3xl md:max-w-6xl mx-auto mt-4 md:mt-6 text-center">
         <ScrollReveal>
           <p className="text-sm leading-relaxed">
-            This January marks its debut. A new seat in fashion begins here.
+            Oct 6 | Las Vegas | Fashion Week Watch Party
+            <br />
+            Jan 28 | Bel-Aire Lounge | A Style Experience
           </p>
         </ScrollReveal>
       </div>

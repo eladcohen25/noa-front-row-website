@@ -1,54 +1,21 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-
-// Target date: January 28, 2026 at 7:00 PM Las Vegas time (PST = UTC-8)
-// Using fixed UTC timestamp to avoid timezone issues
-const TARGET_DATE = new Date('2026-01-29T03:00:00Z') // 7:00 PM PST = 03:00 UTC next day
-
-const TICKETS_URL = 'https://tickets.thefrontrow.vegas/'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import KlaviyoSignupOverlay from './KlaviyoSignupOverlay'
 
 export default function Hero() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 })
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [subtitleVisible, setSubtitleVisible] = useState(false)
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isLive: false })
-  const [isMounted, setIsMounted] = useState(false)
   const heroRef = useRef<HTMLDivElement>(null)
   const blurredVideoRef = useRef<HTMLVideoElement>(null)
   const sharpVideoRef = useRef<HTMLVideoElement>(null)
   const animationFrameRef = useRef<number>()
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
-
-  // Mark as mounted to avoid hydration mismatch
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  // Countdown timer
-  useEffect(() => {
-    const updateCountdown = () => {
-      const now = new Date().getTime()
-      const target = TARGET_DATE.getTime()
-      const difference = target - now
-
-      if (difference <= 0) {
-        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, isLive: true })
-        return
-      }
-
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000)
-
-      setCountdown({ days, hours, minutes, seconds, isLive: false })
-    }
-
-    updateCountdown()
-    const interval = setInterval(updateCountdown, 1000)
-    return () => clearInterval(interval)
+  const handleCloseForm = useCallback(() => {
+    setIsFormOpen(false)
   }, [])
 
   // Prefers-reduced-motion
@@ -224,9 +191,9 @@ export default function Hero() {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-end pointer-events-none">
-          <div className="text-center space-y-6 pointer-events-auto pb-32 md:pb-32 px-4" style={isTouchDevice ? { paddingBottom: '15vh' } : undefined}>
+          <div className="text-center space-y-8 pointer-events-auto pb-32 md:pb-32" style={isTouchDevice ? { paddingBottom: '15vh' } : undefined}>
             <h2
-              className={`text-2xl md:text-4xl lg:text-5xl font-la-foonte uppercase tracking-wide leading-tight ${
+              className={`text-4xl md:text-6xl font-la-foonte uppercase tracking-wide ${
                 isTouchDevice ? 'luxury-shimmer' : 'text-white'
               }`}
               style={isTouchDevice ? undefined : {
@@ -234,75 +201,11 @@ export default function Hero() {
                 color: '#fff',
               }}
             >
-              Jan. 28th, 7:00pm at Bel Aire Durango Casino
+              Next Event Coming Soon.
             </h2>
-            
-            {/* Countdown Timer */}
-            <div
-              className={`font-la-foonte tracking-widest ${
-                isTouchDevice ? 'luxury-shimmer' : 'text-white'
-              }`}
-              style={isTouchDevice ? undefined : {
-                mixBlendMode: 'difference',
-                color: '#fff',
-              }}
-            >
-              {isMounted ? (
-                countdown.isLive ? (
-                  <span className="text-lg md:text-2xl">LIVE NOW</span>
-                ) : (
-                  <div className="flex items-center justify-center gap-3 md:gap-6">
-                    <div className="flex flex-col items-center">
-                      <span className="text-2xl md:text-4xl">{String(countdown.days).padStart(2, '0')}</span>
-                      <span className="text-[10px] md:text-xs uppercase tracking-wider mt-1">Days</span>
-                    </div>
-                    <span className="text-2xl md:text-4xl">:</span>
-                    <div className="flex flex-col items-center">
-                      <span className="text-2xl md:text-4xl">{String(countdown.hours).padStart(2, '0')}</span>
-                      <span className="text-[10px] md:text-xs uppercase tracking-wider mt-1">Hours</span>
-                    </div>
-                    <span className="text-2xl md:text-4xl">:</span>
-                    <div className="flex flex-col items-center">
-                      <span className="text-2xl md:text-4xl">{String(countdown.minutes).padStart(2, '0')}</span>
-                      <span className="text-[10px] md:text-xs uppercase tracking-wider mt-1">Minutes</span>
-                    </div>
-                    <span className="text-2xl md:text-4xl">:</span>
-                    <div className="flex flex-col items-center">
-                      <span className="text-2xl md:text-4xl">{String(countdown.seconds).padStart(2, '0')}</span>
-                      <span className="text-[10px] md:text-xs uppercase tracking-wider mt-1">Seconds</span>
-                    </div>
-                  </div>
-                )
-              ) : (
-                <div className="flex items-center justify-center gap-3 md:gap-6">
-                  <div className="flex flex-col items-center">
-                    <span className="text-2xl md:text-4xl">--</span>
-                    <span className="text-[10px] md:text-xs uppercase tracking-wider mt-1">Days</span>
-                  </div>
-                  <span className="text-2xl md:text-4xl">:</span>
-                  <div className="flex flex-col items-center">
-                    <span className="text-2xl md:text-4xl">--</span>
-                    <span className="text-[10px] md:text-xs uppercase tracking-wider mt-1">Hours</span>
-                  </div>
-                  <span className="text-2xl md:text-4xl">:</span>
-                  <div className="flex flex-col items-center">
-                    <span className="text-2xl md:text-4xl">--</span>
-                    <span className="text-[10px] md:text-xs uppercase tracking-wider mt-1">Minutes</span>
-                  </div>
-                  <span className="text-2xl md:text-4xl">:</span>
-                  <div className="flex flex-col items-center">
-                    <span className="text-2xl md:text-4xl">--</span>
-                    <span className="text-[10px] md:text-xs uppercase tracking-wider mt-1">Seconds</span>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <a
-              href={TICKETS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`inline-block px-8 py-3 rounded-full text-xs uppercase tracking-wider hover:bg-black/10 ${
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className={`px-8 py-3 rounded-full text-xs uppercase tracking-wider hover:bg-black/10 ${
                 isTouchDevice ? 'luxury-shimmer border border-black/30' : 'text-white border border-white/30 hover:bg-white/10'
               }`}
               style={isTouchDevice ? {
@@ -317,11 +220,16 @@ export default function Hero() {
                 color: '#fff',
               }}
             >
-              TAP FOR TICKETS
-            </a>
+              TAP FOR EARLY ACCESS
+            </button>
           </div>
         </div>
       </div>
+
+      <KlaviyoSignupOverlay
+        isOpen={isFormOpen}
+        onClose={handleCloseForm}
+      />
     </>
   )
 }
