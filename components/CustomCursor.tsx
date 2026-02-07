@@ -92,7 +92,7 @@ export default function CustomCursor() {
   return (
     <div
       ref={cursorRef}
-      className="pointer-events-none fixed top-0 left-0 z-[9999]"
+      className="pointer-events-none fixed top-0 left-0 z-[999999]"
       style={{
         width: isHovering ? '28px' : '18px',
         height: isHovering ? '28px' : '18px',
