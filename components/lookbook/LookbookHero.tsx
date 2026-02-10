@@ -53,15 +53,38 @@ export default function LookbookHero({ label, title, videoSrc, posterSrc, ctaTex
     setIsMuted(video.muted)
   }
 
-  const handleWatchFilm = () => {
+  const handleWatchFilm = async () => {
     const video = videoRef.current
     if (!video) return
 
     video.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    video.muted = false
+    setIsMuted(false)
+
+    // Try to enter fullscreen for the video
+    const anyVideo = video as HTMLVideoElement & {
+      webkitEnterFullscreen?: () => void
+      webkitRequestFullscreen?: () => Promise<void>
+      msRequestFullscreen?: () => Promise<void>
+    }
+    try {
+      if (video.requestFullscreen) {
+        await video.requestFullscreen()
+      } else if (anyVideo.webkitEnterFullscreen) {
+        anyVideo.webkitEnterFullscreen()
+      } else if (anyVideo.webkitRequestFullscreen) {
+        await anyVideo.webkitRequestFullscreen()
+      } else if (anyVideo.msRequestFullscreen) {
+        await anyVideo.msRequestFullscreen()
+      }
+    } catch {
+      // Ignore fullscreen errors and continue playback
+    }
+
     setTimeout(() => {
       video.play()
       setIsPlaying(true)
-    }, 500)
+    }, 150)
   }
 
   return (
@@ -83,11 +106,17 @@ export default function LookbookHero({ label, title, videoSrc, posterSrc, ctaTex
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
-              poster={posterSrc}
-              preload="metadata"
+              preload="auto"
               playsInline
               muted={isMuted}
               loop
+              onLoadedData={() => {
+                const video = videoRef.current
+                if (!video) return
+                // Ensure the first frame is visible as the poster
+                video.currentTime = 0
+                video.pause()
+              }}
             >
               {isInView && <source src={videoSrc} type="video/mp4" />}
             </video>

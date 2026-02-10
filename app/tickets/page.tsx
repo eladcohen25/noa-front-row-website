@@ -10,6 +10,13 @@ import ScrollReveal from '@/components/ScrollReveal'
 const REQUIRE_PASSWORD = true
 // ========================================
 
+// ========================================
+// PAGE VISIBILITY TOGGLE
+// Set to true to show the Tickets page
+// ========================================
+const SHOW_TICKETS_PAGE = false
+// ========================================
+
 const ACCESS_CODE = 'TFR2026'
 const TICKETING_URL = 'https://tickets.thefrontrow.vegas/'
 
@@ -22,6 +29,9 @@ const ERROR_MESSAGES = [
 ]
 
 export default function Tickets() {
+  if (!SHOW_TICKETS_PAGE) {
+    return null
+  }
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')

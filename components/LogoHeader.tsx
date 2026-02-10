@@ -78,7 +78,7 @@ export default function LogoHeader() {
   const desktopOffset = !isMobile && !isHome ? 'left-[calc(50%+128px)]' : 'left-1/2'
   
   return (
-    <div className={`fixed z-40 pointer-events-none -translate-x-1/2 ${desktopOffset} ${isMobile ? 'top-5 safe-top' : 'top-8'}`}>
+    <div className={`absolute z-40 pointer-events-none -translate-x-1/2 ${desktopOffset} ${isMobile ? 'top-5 safe-top' : 'top-8'}`}>
       <div className="relative flex items-center justify-center">
         {showText && (
           <h1 className={`font-la-foonte font-normal tracking-tight whitespace-nowrap transition-opacity duration-300 text-black ${isMobile ? 'text-base' : 'text-xl'}`}>

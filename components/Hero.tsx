@@ -191,7 +191,7 @@ export default function Hero() {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-end pointer-events-none">
-          <div className="text-center space-y-8 pointer-events-auto pb-32 md:pb-32" style={isTouchDevice ? { paddingBottom: '15vh' } : undefined}>
+          <div className="text-center space-y-8 pointer-events-auto pb-32 md:pb-32 px-6 md:px-12" style={isTouchDevice ? { paddingBottom: '15vh' } : undefined}>
             <h2
               className={`text-4xl md:text-6xl font-la-foonte uppercase tracking-wide ${
                 isTouchDevice ? 'luxury-shimmer' : 'text-white'
@@ -201,7 +201,7 @@ export default function Hero() {
                 color: '#fff',
               }}
             >
-              Next Event Coming Soon.
+              Creative Direction & Experiential Production Studio
             </h2>
             <button
               onClick={() => setIsFormOpen(true)}

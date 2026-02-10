@@ -199,7 +199,7 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
       <div
         style={{
           opacity: 1,
-          filter: `blur(${pageBlur}px)`,
+          ...(pageBlur > 0 ? { filter: `blur(${pageBlur}px)` } : {}),
           pointerEvents: isLoading ? 'none' : 'auto',
           transition: 'filter 500ms cubic-bezier(0.25, 0.1, 0.25, 1)',
         }}

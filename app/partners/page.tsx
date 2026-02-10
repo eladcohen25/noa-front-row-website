@@ -1,3 +1,5 @@
+'use client'
+
 import ScrollReveal from '@/components/ScrollReveal'
 import Image from 'next/image'
 
@@ -61,7 +63,17 @@ const partners = [
 ]
 // ========================================
 
+// ========================================
+// PAGE VISIBILITY TOGGLE
+// Set to true to show the Partners page
+// ========================================
+const SHOW_PARTNERS_PAGE = false
+// ========================================
+
 export default function Partners() {
+  if (!SHOW_PARTNERS_PAGE) {
+    return null
+  }
   return (
     <div className="min-h-screen bg-white pt-28 md:pt-40 pb-24 px-4 md:px-8">
       <div className="max-w-3xl mx-auto md:text-center mb-16">
@@ -76,37 +88,93 @@ export default function Partners() {
         </ScrollReveal>
       </div>
 
-      {/* Partners Grid */}
-      <div className="max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 md:gap-16">
-          {partners.map((partner, index) => (
-            <ScrollReveal key={index}>
-              <div className="flex flex-col items-center text-center">
-                {/* Logo */}
-                <div 
-                  className="relative w-full mb-6"
-                  style={{ 
-                    maxWidth: partner.size?.width ? `${partner.size.width}px` : '200px',
-                    height: partner.size?.height ? `${partner.size.height}px` : '120px'
-                  }}
-                >
-                  <Image
-                    src={partner.image}
-                    alt={partner.name}
-                    fill
-                    className="object-contain"
-                  />
+      {/* Partners Scroll (auto, side-by-side) */}
+      <div className="max-w-6xl mx-auto">
+        <div className="partners-marquee">
+          <div className="partners-marquee__inner">
+            <div className="partners-marquee__track">
+              {partners.map((partner) => (
+                <div key={partner.name} className="partner-item">
+                  <div
+                    className="relative w-full mb-4"
+                    style={{
+                      maxWidth: partner.size?.width ? `${partner.size.width}px` : '200px',
+                      height: partner.size?.height ? `${partner.size.height}px` : '120px',
+                    }}
+                  >
+                    <Image src={partner.image} alt={partner.name} fill className="object-contain" />
+                  </div>
+                  <p className="font-typekit text-sm tracking-wide text-center">{partner.name}</p>
                 </div>
-
-                {/* Partner Name */}
-                <p className="font-typekit text-sm tracking-wide">
-                  {partner.name}
-                </p>
-              </div>
-            </ScrollReveal>
-          ))}
+              ))}
+            </div>
+            <div className="partners-marquee__track" aria-hidden="true">
+              {partners.map((partner) => (
+                <div key={`${partner.name}-dup`} className="partner-item">
+                  <div
+                    className="relative w-full mb-4"
+                    style={{
+                      maxWidth: partner.size?.width ? `${partner.size.width}px` : '200px',
+                      height: partner.size?.height ? `${partner.size.height}px` : '120px',
+                    }}
+                  >
+                    <Image src={partner.image} alt={partner.name} fill className="object-contain" />
+                  </div>
+                  <p className="font-typekit text-sm tracking-wide text-center">{partner.name}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+
+      <style jsx global>{`
+        .partners-marquee {
+          overflow: hidden;
+          width: 100%;
+        }
+        .partners-marquee__inner {
+          display: flex;
+          align-items: center;
+          width: max-content;
+          animation: partners-scroll 35s linear infinite;
+          will-change: transform;
+        }
+        .partners-marquee__track {
+          display: flex;
+          align-items: center;
+          gap: 48px;
+          padding: 12px 0;
+          white-space: nowrap;
+        }
+        .partner-item {
+          flex: 0 0 auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-width: 220px;
+        }
+        @keyframes partners-scroll {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+        @media (max-width: 768px) {
+          .partners-marquee__inner {
+            animation-duration: 45s;
+          }
+          .partners-marquee__track {
+            gap: 32px;
+          }
+          .partner-item {
+            min-width: 180px;
+          }
+        }
+      `}</style>
     </div>
   )
 }

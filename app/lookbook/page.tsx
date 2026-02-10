@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import {
   LookbookHero,
   EditorialStatement,
@@ -18,8 +19,8 @@ import {
 const createImagePath = (folder: string, name: string, ext: string) => 
   `/lookbook/${folder}/${encodeURIComponent(name)}.${ext}`
 
-// Generate runway look images (Look 1.jpg through Look 12.jpg)
-const runwayImages = Array.from({ length: 12 }, (_, i) => ({
+// Generate runway look images (Look 1.jpg through Look 18.jpg)
+const runwayImages = Array.from({ length: 18 }, (_, i) => ({
   src: createImagePath('runway', `Look ${i + 1}`, 'jpg'),
   alt: `Look ${i + 1}`,
 }))
@@ -52,19 +53,21 @@ const detailImages = [
   { src: createImagePath('details', 'Detail 17', 'JPEG'), alt: 'Detail 17' },
 ]
 
-// Scroll images under runway (ordered: 1, 1.1, 2, 2.1, etc.)
-const scrollImages = [
-  { src: createImagePath('Scroll Under Runway', 'Scroll 1', 'jpg'), alt: 'Scroll 1' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 1.1', 'jpg'), alt: 'Scroll 1.1' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 2', 'jpg'), alt: 'Scroll 2' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 2.1', 'jpg'), alt: 'Scroll 2.1' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 3', 'jpg'), alt: 'Scroll 3' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 3.1', 'jpg'), alt: 'Scroll 3.1' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 3.2', 'jpg'), alt: 'Scroll 3.2' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 4', 'jpg'), alt: 'Scroll 4' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 4.1', 'jpg'), alt: 'Scroll 4.1' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 5', 'jpg'), alt: 'Scroll 5' },
-  { src: createImagePath('Scroll Under Runway', 'Scroll 6', 'jpg'), alt: 'Scroll 6' },
+// Partners (mirrors partners page)
+const partners = [
+  { name: 'Bel-Aire Lounge', image: '/Partners%20Page%20Logos/BEL-AIRE%20RENDERED.png' },
+  { name: 'Durango Casino & Resort', image: '/Partners%20Page%20Logos/durango%20logo.png' },
+  { name: 'Bonded Permanent Jewelry', image: '/Partners%20Page%20Logos/Bonded%20Permanent%20Jewelry.png' },
+  { name: 'Highland Collection', image: '/Partners%20Page%20Logos/Highland%20Collection.png' },
+  { name: 'Lights Off Media', image: '/Partners%20Page%20Logos/Lights%20Off%20Media.png' },
+  { name: 'AGLOW Media Collective', image: '/Partners%20Page%20Logos/AGLOW%20Media%20Collective.png' },
+  { name: 'Skin with Katy', image: '/Partners%20Page%20Logos/Skin%20with%20Katy.png' },
+  { name: 'TM Soak', image: '/Partners%20Page%20Logos/TM%20SOAK.png', size: { width: 160, height: 120 } },
+  { name: 'Kérastase Paris', image: '/Partners%20Page%20Logos/Kerastase-logo-1.png' },
+  { name: 'Crown Affair', image: '/Partners%20Page%20Logos/crown%20affair.png' },
+  { name: 'The Now', image: '/Partners%20Page%20Logos/The%20Now.png' },
+  { name: 'Summer House', image: '/Partners%20Page%20Logos/Summer%20House%20logo.png' },
+  { name: 'Sephora', image: '/Partners%20Page%20Logos/Sephora.jpeg' },
 ]
 
 // Large photo under fittings
@@ -81,7 +84,7 @@ const lookbookData = {
   hero: {
     label: 'Show',
     title: 'TFR FW26',
-    videoSrc: '/lookbook/hero-video.mp4',
+    videoSrc: '/lookbook/Main%20Video/Project%20Page%20main%20video.mov',
     posterSrc: '/lookbook/hero-poster.jpg',
     ctaText: 'Watch The TFR FW26 Film',
   },
@@ -163,12 +166,6 @@ export default function Lookbook() {
         </button>
       </div>
 
-      {/* Horizontal Scroll Gallery Strip */}
-      <HorizontalScrollGallery
-        images={scrollImages}
-        height={{ mobile: 280, desktop: 380 }}
-      />
-
       {/* Fittings Section */}
       <SectionHeader
         date={lookbookData.fittings.date}
@@ -197,8 +194,83 @@ export default function Lookbook() {
         height={{ mobile: 320, desktop: 420 }}
       />
 
+      {/* Partners Section */}
+      <SectionHeader title="Partners" />
+      <div className="bg-white pb-16 md:pb-24 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="partners-marquee">
+            <div className="partners-marquee__inner">
+              <div className="partners-marquee__track">
+                {partners.map((partner) => (
+                  <div key={partner.name} className="partner-item">
+                    <div
+                      className="relative w-full mb-4"
+                      style={{
+                        maxWidth: partner.size?.width ? `${partner.size.width}px` : '200px',
+                        height: partner.size?.height ? `${partner.size.height}px` : '120px',
+                      }}
+                    >
+                      <Image src={partner.image} alt={partner.name} fill className="object-contain" />
+                    </div>
+                    <p className="font-typekit text-sm tracking-wide text-center">{partner.name}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="partners-marquee__track" aria-hidden="true">
+                {partners.map((partner) => (
+                  <div key={`${partner.name}-dup`} className="partner-item">
+                    <div
+                      className="relative w-full mb-4"
+                      style={{
+                        maxWidth: partner.size?.width ? `${partner.size.width}px` : '200px',
+                        height: partner.size?.height ? `${partner.size.height}px` : '120px',
+                      }}
+                    >
+                      <Image src={partner.image} alt={partner.name} fill className="object-contain" />
+                    </div>
+                    <p className="font-typekit text-sm tracking-wide text-center">{partner.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Bottom spacing */}
       <div className="h-24 bg-white" />
+
+      {/* Footer */}
+      <div className="bg-black py-16 md:py-24 px-6 md:px-12">
+        <div className="max-w-3xl text-left">
+          <p className="text-4xl md:text-6xl font-la-foonte uppercase tracking-wide text-white leading-tight">
+            Editorial experiences in real life
+          </p>
+          <div className="mt-10 flex items-center gap-8">
+            <a
+              href="https://www.instagram.com/thefrontrowlv"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-white"
+            >
+              <Image
+                src="/Contact%20Page%20Photos/instagram-icon.png"
+                alt="Instagram"
+                width={18}
+                height={18}
+                className="invert"
+              />
+              Instagram
+            </a>
+            <a
+              href="mailto:info@thefrontrow.vegas"
+              className="text-sm uppercase tracking-[0.3em] text-white"
+            >
+              info@thefrontrow.vegas
+            </a>
+          </div>
+        </div>
+      </div>
 
       {/* All Looks Overlay */}
       <AllLooksOverlay
@@ -208,6 +280,54 @@ export default function Lookbook() {
         initialIndex={overlayIndex}
         initialView={overlayView}
       />
+
+      <style jsx global>{`
+        .partners-marquee {
+          overflow: hidden;
+          width: 100%;
+        }
+        .partners-marquee__inner {
+          display: flex;
+          align-items: center;
+          width: max-content;
+          animation: partners-scroll 35s linear infinite;
+          will-change: transform;
+        }
+        .partners-marquee__track {
+          display: flex;
+          align-items: center;
+          gap: 48px;
+          padding: 12px 0;
+          white-space: nowrap;
+        }
+        .partner-item {
+          flex: 0 0 auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-width: 220px;
+        }
+        @keyframes partners-scroll {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+        @media (max-width: 768px) {
+          .partners-marquee__inner {
+            animation-duration: 45s;
+          }
+          .partners-marquee__track {
+            gap: 32px;
+          }
+          .partner-item {
+            min-width: 180px;
+          }
+        }
+      `}</style>
     </div>
   )
 }

@@ -4,12 +4,25 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
-const navItems = [
-  { href: '/', label: 'Home', subLabel: 'Jan. 2026, Las Vegas' },
+type NavItem = {
+  href: string
+  label: string
+  subLabel?: string
+}
+
+// Toggle visibility of Tickets link (set true to show)
+const SHOW_TICKETS_PAGE = false
+// Toggle visibility of Partners link (set true to show)
+const SHOW_PARTNERS_PAGE = false
+
+const navItems: NavItem[] = [
+  { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
-  { href: '/tickets', label: 'Tickets' },
-  { href: '/partners', label: 'Partners' },
-  { href: '/lookbook', label: 'Lookbook' },
+  ...(SHOW_TICKETS_PAGE ? [{ href: '/tickets', label: 'Tickets' }] : []),
+  ...(SHOW_PARTNERS_PAGE ? [{ href: '/partners', label: 'Partners' }] : []),
+  { href: '/services', label: 'Services' },
+  { href: '/experiences', label: 'Experiences' },
+  { href: '/lookbook', label: 'Projects' },
   { href: '/contact', label: 'Contact' },
 ]
 
@@ -99,7 +112,7 @@ export default function LeftNav() {
 
       {/* Desktop navigation - hidden on mobile via hidden md:block */}
       <nav 
-        className={`hidden md:block fixed top-0 h-full z-50 ${isHome ? 'w-auto' : 'w-64 border-r border-gray-200 bg-white'}`}
+        className={`hidden md:block fixed top-0 bottom-0 h-full z-50 ${isHome ? 'w-auto' : 'w-64 border-r border-gray-200 bg-white'}`}
         style={{ left: isHome ? '48px' : '0px' }}
       >
         <div className="flex flex-col h-full p-8">

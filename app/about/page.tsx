@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 // ========================================
 const ABOUT_IMAGE_MOBILE = '/About%20Page%20Photos/noa%20duo%20red%201.jpg'
 const ABOUT_IMAGE_DESKTOP = '/About%20Page%20Photos/Desktop%20Image.jpg'
+const ABOUT_IMAGE_RACK = '/About%20Page%20Photos/noa%20website%20rack%20pic.jpg'
 // ========================================
 
 export default function About() {
@@ -27,17 +28,54 @@ export default function About() {
       <div className="max-w-3xl mx-auto md:text-center">
         <ScrollReveal>
           <h1 className="text-5xl mb-12">
-            <span className="font-typekit">A Style </span>
-            <span className="font-typekit-italic">Experience.</span>
+            <span className="font-typekit">Fashion-Forward Environments and </span>
+            <span className="font-typekit-italic">Editorial Experiences.</span>
           </h1>
         </ScrollReveal>
 
         <ScrollReveal>
           <p className="text-base leading-relaxed">
-            <span className="font-typekit-italic">The Front Row</span>
+            <span className="font-typekit-italic">The Studio</span>
             <br />
-            A fashion first event and cultural platform operating at the intersection of runway, beauty, and brand storytelling.
+            The Front Row is a creative studio specializing in fashion-led experiences, visual storytelling, and cultural moments. Blending runway, styling, and environment design into editorial-grade productions.
           </p>
+        </ScrollReveal>
+
+        <div className="mt-8 md:mt-10 relative left-1/2 right-1/2 w-screen -translate-x-1/2">
+          <img
+            src={ABOUT_IMAGE_RACK}
+            alt="Noa website rack"
+            className="w-full object-cover"
+            style={{
+              clipPath: imageRevealed
+                ? 'inset(0 0% 0 0%)'
+                : 'inset(0 30% 0 30%)',
+              transition: 'clip-path 1.3s ease-out',
+            }}
+          />
+        </div>
+
+        <ScrollReveal>
+          <div className="mt-6 text-base leading-relaxed">
+            <p>
+              <span className="font-typekit-italic">Founder</span>
+              <br />
+              Noa Cohen
+              <br />
+              Creative Director & Stylist
+              <br />
+              <a href="mailto:noa@thefrontrow.vegas" className="underline underline-offset-4">
+                noa@thefrontrow.vegas
+              </a>
+            </p>
+            <p className="mt-4">
+              Noa Cohen is a creative director and stylist working at the intersection of fashion,
+              experience, and visual storytelling. With a background in business and marketing, Noa
+              founded The Front Row to create editorial-grade environments that bring runway energy
+              into real-world spaces. Her work centers on narrative-driven styling, immersive
+              production, and culturally relevant fashion experiences.
+            </p>
+          </div>
         </ScrollReveal>
       </div>
 
@@ -50,18 +88,12 @@ export default function About() {
           className="w-full object-cover rounded-xl"
         />
       </div>
-      {/* Desktop image - full width edge to edge with center-expand reveal */}
+      {/* Desktop image - full width edge to edge */}
       <div className="hidden md:block mt-10 -mx-8 px-0">
         <img
           src={ABOUT_IMAGE_DESKTOP}
           alt="About"
           className="w-full object-cover"
-          style={{
-            clipPath: imageRevealed 
-              ? 'inset(0 0% 0 0%)' 
-              : 'inset(0 30% 0 30%)',
-            transition: 'clip-path 1.3s ease-out',
-          }}
         />
       </div>
 
