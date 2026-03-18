@@ -92,9 +92,9 @@ export default function Contact() {
               )}
 
               {/* Email */}
-              <p className="text-sm mb-3">
+              <a href={`mailto:${contact.email}`} className="text-sm mb-3 block hover:opacity-70 transition-opacity">
                 {contact.email}
-              </p>
+              </a>
 
               {/* Instagram */}
               <a
@@ -138,9 +138,9 @@ export default function Contact() {
               )}
 
               {/* Email */}
-              <p className="text-sm mb-3">
+              <a href={`mailto:${contact.email}`} className="text-sm mb-3 block hover:opacity-70 transition-opacity">
                 {contact.email}
-              </p>
+              </a>
 
               {/* Instagram */}
               <a
