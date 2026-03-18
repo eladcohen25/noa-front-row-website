@@ -24,8 +24,8 @@ export default function RootLayout({
       <body>
         <RootLayoutClient>{children}</RootLayoutClient>
 
-        <Script id="klaviyo-disable-autofill">
-          {`try { window.__klaviyoDisableAutofill = true; } catch(e) {}`}
+        <Script id="klaviyo-init" strategy="beforeInteractive">
+          {`try { window.__klaviyoDisableAutofill = true; window._klOnsite = window._klOnsite || []; } catch(e) {}`}
         </Script>
         <Script
           src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=S72EYZ"

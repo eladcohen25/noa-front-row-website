@@ -21,15 +21,23 @@ export default function KlaviyoSignupOverlay({ isOpen, onClose }: KlaviyoSignupO
     const win = window as any
     
     const openForm = () => {
-      // Try _klOnsite first (standard method)
       if (win._klOnsite) {
         win._klOnsite.push(['openForm', 'RpnBYt'])
         return true
       }
       
-      // Try klaviyo object (alternative method)
-      if (win.klaviyo) {
+      if (win.klaviyo && typeof win.klaviyo.openForm === 'function') {
+        win.klaviyo.openForm('RpnBYt')
+        return true
+      }
+
+      if (win.klaviyo && win.klaviyo.push) {
         win.klaviyo.push(['openForm', 'RpnBYt'])
+        return true
+      }
+
+      if (win.KlaviyoOnsiteSDK) {
+        win.KlaviyoOnsiteSDK.openForm('RpnBYt')
         return true
       }
       
@@ -58,6 +66,7 @@ export default function KlaviyoSignupOverlay({ isOpen, onClose }: KlaviyoSignupO
       if (attempts < maxAttempts) {
         timeoutId = setTimeout(tryOpen, 150)
       } else {
+        console.warn('Klaviyo not available — ensure the script is loaded')
         onClose()
       }
     }

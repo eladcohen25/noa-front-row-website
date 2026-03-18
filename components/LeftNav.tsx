@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
   { href: '/contact', label: 'Contact' },
 ]
 
-export default function LeftNav() {
+export default function LeftNav({ isNavigating }: { isNavigating?: boolean } = {}) {
   const pathname = usePathname()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -102,7 +102,11 @@ export default function LeftNav() {
           <Link
             key={item.href}
             href={item.href}
-            onClick={() => setMenuOpen(false)}
+            onClick={() => {
+              if (pathname === item.href) {
+                setMenuOpen(false)
+              }
+            }}
             className={`text-xl uppercase tracking-[0.3em] text-black ${
               pathname === item.href ? 'opacity-100' : 'opacity-60'
             }`}
