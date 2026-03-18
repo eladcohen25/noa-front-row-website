@@ -8,8 +8,7 @@ import { useState, useEffect } from 'react'
 // ========================================
 const CONTACT_IMAGES = {
   noaCohen: '/Contact%20Page%20Photos/noa-cohen.jpg',
-  briannaBrown: '/Contact%20Page%20Photos/brianna-brown.jpg',
-  theFrontRowLv: '/Contact%20Page%20Photos/the-front-row-lv.jpg',
+  theFrontRowLv: '/Contact%20Page%20Photos/final%20contact%20photo.png',
   instagramIcon: '/Contact%20Page%20Photos/instagram-icon.png',
 }
 // ========================================
@@ -19,21 +18,13 @@ const contacts = [
     image: CONTACT_IMAGES.noaCohen,
     name: 'Noa Cohen',
     role: 'Founder & Creative Director',
-    email: 'noacohenbiz@gmail.com',
+    email: 'noa@thefrontrow.vegas',
     instagram: '@noacohen.23',
     instagramUrl: 'https://www.instagram.com/noacohen.23',
   },
   {
-    image: CONTACT_IMAGES.briannaBrown,
-    name: 'Brianna O. Brown',
-    role: 'Director of Beauty & Cosmetics',
-    email: 'srbbrianna@gmail.com',
-    instagram: '@brianna.o.brown',
-    instagramUrl: 'https://www.instagram.com/brianna.o.brown',
-  },
-  {
     image: CONTACT_IMAGES.theFrontRowLv,
-    name: 'THE FRONT ROW LV',
+    name: 'THE FRONT ROW',
     role: '',
     email: 'info@thefrontrow.vegas',
     instagram: '@thefrontrowlv',
@@ -53,21 +44,14 @@ export default function Contact() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Get reveal style for each card (desktop only)
-  // Index 1 (Brianna) is always visible, 0 and 2 fade in
   const getCardRevealStyle = (index: number) => {
-    if (index === 1) {
-      // Center card (Brianna) - always visible
-      return {}
-    }
-    // Left and right cards - fade in with clip-path reveal expanding outward from center
     return {
       opacity: cardsRevealed ? 1 : 0,
       clipPath: cardsRevealed 
         ? 'inset(0 0% 0 0%)' 
         : index === 0 
-          ? 'inset(0 0% 0 100%)' // Left card reveals from left (expanding outward)
-          : 'inset(0 100% 0 0%)', // Right card reveals from right (expanding outward)
+          ? 'inset(0 0% 0 100%)'
+          : 'inset(0 100% 0 0%)',
       transition: 'opacity 1.3s cubic-bezier(0.2, 0.8, 0.2, 1), clip-path 1.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
     }
   }
@@ -80,7 +64,7 @@ export default function Contact() {
         </ScrollReveal>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 max-w-3xl mx-auto">
         {contacts.map((contact, index) => (
           <div 
             key={index}

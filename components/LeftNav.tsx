@@ -14,6 +14,8 @@ type NavItem = {
 const SHOW_TICKETS_PAGE = false
 // Toggle visibility of Partners link (set true to show)
 const SHOW_PARTNERS_PAGE = false
+// Toggle visibility of Experiences link (set true to show)
+const SHOW_EXPERIENCES_PAGE = false
 
 const navItems: NavItem[] = [
   { href: '/', label: 'Home' },
@@ -21,8 +23,8 @@ const navItems: NavItem[] = [
   ...(SHOW_TICKETS_PAGE ? [{ href: '/tickets', label: 'Tickets' }] : []),
   ...(SHOW_PARTNERS_PAGE ? [{ href: '/partners', label: 'Partners' }] : []),
   { href: '/services', label: 'Services' },
-  { href: '/experiences', label: 'Experiences' },
-  { href: '/lookbook', label: 'Projects' },
+  ...(SHOW_EXPERIENCES_PAGE ? [{ href: '/experiences', label: 'Experiences' }] : []),
+  { href: '/lookbook', label: 'FW26 @ Bel-Aire' },
   { href: '/contact', label: 'Contact' },
 ]
 

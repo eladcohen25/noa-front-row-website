@@ -167,7 +167,7 @@ export default function Hero() {
             filter: isTouchDevice ? 'blur(5px)' : 'blur(12px)',
           }}
         >
-          <source src={isTouchDevice ? "/Mobile hero-video.mp4" : "/hero-video.mp4"} type="video/mp4" />
+          <source src={isTouchDevice ? "/Mobile hero-video.mp4" : "/home%20vid.mp4"} type="video/mp4" />
         </video>
 
         {/* Sharp Video with Spotlight Mask with native loop */}
@@ -185,7 +185,7 @@ export default function Hero() {
               WebkitMaskImage: `radial-gradient(ellipse 350px 280px at ${spotlightPosition.x}px ${spotlightPosition.y}px, black 0%, transparent 70%)`,
             }}
           >
-            <source src="/hero-video.mp4" type="video/mp4" />
+            <source src="/home%20vid.mp4" type="video/mp4" />
           </video>
         )}
 
@@ -194,30 +194,20 @@ export default function Hero() {
           <div className="text-center space-y-8 pointer-events-auto pb-32 md:pb-32 px-6 md:px-12" style={isTouchDevice ? { paddingBottom: '15vh' } : undefined}>
             <h2
               className={`text-4xl md:text-6xl font-la-foonte uppercase tracking-wide ${
-                isTouchDevice ? 'luxury-shimmer' : 'text-white'
+                isTouchDevice ? 'luxury-shimmer' : 'text-black'
               }`}
-              style={isTouchDevice ? undefined : {
-                mixBlendMode: 'difference',
-                color: '#fff',
-              }}
             >
               Creative Direction & Experiential Production Studio
             </h2>
             <button
               onClick={() => setIsFormOpen(true)}
               className={`px-8 py-3 rounded-full text-xs uppercase tracking-wider hover:bg-black/10 ${
-                isTouchDevice ? 'luxury-shimmer border border-black/30' : 'text-white border border-white/30 hover:bg-white/10'
+                isTouchDevice ? 'luxury-shimmer border border-black/30' : 'text-black border border-black/30'
               }`}
-              style={isTouchDevice ? {
+              style={{
                 opacity: subtitleVisible ? 1 : 0,
                 transform: subtitleVisible ? 'translateY(0)' : 'translateY(-8px)',
                 transition: 'opacity 400ms ease-out, transform 400ms ease-out, background-color 200ms ease-out',
-              } : {
-                opacity: subtitleVisible ? 1 : 0,
-                transform: subtitleVisible ? 'translateY(0)' : 'translateY(-8px)',
-                transition: 'opacity 400ms ease-out, transform 400ms ease-out, background-color 200ms ease-out',
-                mixBlendMode: 'difference',
-                color: '#fff',
               }}
             >
               TAP FOR EARLY ACCESS

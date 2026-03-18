@@ -6,9 +6,8 @@ import { useState, useEffect } from 'react'
 // ========================================
 // ABOUT PAGE IMAGES - Easy to replace
 // ========================================
-const ABOUT_IMAGE_MOBILE = '/About%20Page%20Photos/noa%20duo%20red%201.jpg'
-const ABOUT_IMAGE_DESKTOP = '/About%20Page%20Photos/Desktop%20Image.jpg'
-const ABOUT_IMAGE_RACK = '/About%20Page%20Photos/noa%20website%20rack%20pic.jpg'
+const ABOUT_IMAGE_FIRST = '/About%20Page%20Photos/TFR%20-258%20copy.jpg'
+const ABOUT_IMAGE_SECOND = '/About%20Page%20Photos/noa%20website%20rack%20pic.jpg'
 // ========================================
 
 export default function About() {
@@ -28,8 +27,8 @@ export default function About() {
       <div className="max-w-3xl mx-auto md:text-center">
         <ScrollReveal>
           <h1 className="text-5xl mb-12">
-            <span className="font-typekit">Fashion-Forward Environments and </span>
-            <span className="font-typekit-italic">Editorial Experiences.</span>
+            <span className="font-typekit">A Fashion-First Production Studio Shaping </span>
+            <span className="font-typekit-italic">Culture Through Experience.</span>
           </h1>
         </ScrollReveal>
 
@@ -43,7 +42,7 @@ export default function About() {
 
         <div className="mt-8 md:mt-10 relative left-1/2 right-1/2 w-screen -translate-x-1/2">
           <img
-            src={ABOUT_IMAGE_RACK}
+            src={ABOUT_IMAGE_FIRST}
             alt="Noa website rack"
             className="w-full object-cover"
             style={{
@@ -79,19 +78,9 @@ export default function About() {
         </ScrollReveal>
       </div>
 
-      {/* Image section */}
-      {/* Mobile image - constrained width */}
-      <div className="mt-8 max-w-3xl mx-auto md:hidden">
+      <div className="mt-8 md:mt-10 relative left-1/2 right-1/2 w-screen -translate-x-1/2">
         <img
-          src={ABOUT_IMAGE_MOBILE}
-          alt="About"
-          className="w-full object-cover rounded-xl"
-        />
-      </div>
-      {/* Desktop image - full width edge to edge */}
-      <div className="hidden md:block mt-10 -mx-8 px-0">
-        <img
-          src={ABOUT_IMAGE_DESKTOP}
+          src={ABOUT_IMAGE_SECOND}
           alt="About"
           className="w-full object-cover"
         />
