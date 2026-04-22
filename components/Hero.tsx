@@ -1,22 +1,19 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import KlaviyoSignupOverlay from './KlaviyoSignupOverlay'
+import { useEffect, useRef, useState } from 'react'
 
 export default function Hero() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 })
-  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [showTypeform, setShowTypeform] = useState(false)
   const [subtitleVisible, setSubtitleVisible] = useState(false)
   const heroRef = useRef<HTMLDivElement>(null)
   const blurredVideoRef = useRef<HTMLVideoElement>(null)
   const sharpVideoRef = useRef<HTMLVideoElement>(null)
+  const typeformContainerRef = useRef<HTMLDivElement>(null)
   const animationFrameRef = useRef<number>()
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
-  const handleCloseForm = useCallback(() => {
-    setIsFormOpen(false)
-  }, [])
 
   // Prefers-reduced-motion
   useEffect(() => {
@@ -97,7 +94,21 @@ export default function Hero() {
     }
   }, [isTouchDevice])
 
-  // No JS-based looping; rely on native loop for maximum stability
+  // Load Typeform embed script when overlay opens
+  useEffect(() => {
+    if (!showTypeform) return
+    const existing = document.querySelector('script[src*="embed.typeform.com"]')
+    if (existing) {
+      existing.remove()
+    }
+    const script = document.createElement('script')
+    script.src = '//embed.typeform.com/next/embed.js'
+    script.async = true
+    document.body.appendChild(script)
+    return () => {
+      script.remove()
+    }
+  }, [showTypeform])
 
   // Mouse tracking
   useEffect(() => {
@@ -167,7 +178,7 @@ export default function Hero() {
             filter: isTouchDevice ? 'blur(5px)' : 'blur(12px)',
           }}
         >
-          <source src={isTouchDevice ? "/Mobile hero-video.mp4" : "/home%20vid.mp4"} type="video/mp4" />
+          <source src="/home%20vid.mp4" type="video/mp4" />
         </video>
 
         {/* Sharp Video with Spotlight Mask with native loop */}
@@ -200,7 +211,7 @@ export default function Hero() {
               Creative Direction & Experiential Production Studio
             </h2>
             <button
-              onClick={() => setIsFormOpen(true)}
+              onClick={() => setShowTypeform(true)}
               className={`px-8 py-3 rounded-full text-xs uppercase tracking-wider hover:bg-black/10 ${
                 isTouchDevice ? 'luxury-shimmer border border-black/30' : 'text-black border border-black/30'
               }`}
@@ -210,16 +221,34 @@ export default function Hero() {
                 transition: 'opacity 400ms ease-out, transform 400ms ease-out, background-color 200ms ease-out',
               }}
             >
-              TAP FOR EARLY ACCESS
+              INQUIRE NOW
             </button>
           </div>
         </div>
       </div>
 
-      <KlaviyoSignupOverlay
-        isOpen={isFormOpen}
-        onClose={handleCloseForm}
-      />
+      {showTypeform && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowTypeform(false)
+          }}
+        >
+          <div className="relative w-full max-w-2xl h-[80vh] mx-4 bg-white rounded-xl overflow-hidden">
+            <button
+              onClick={() => setShowTypeform(false)}
+              className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition-colors text-black text-lg"
+            >
+              &times;
+            </button>
+            <div
+              ref={typeformContainerRef}
+              data-tf-live="01KPSE3BVSAEQ08G6TCMAD26T2"
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+      )}
     </>
   )
 }
