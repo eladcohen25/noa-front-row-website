@@ -11,6 +11,13 @@ module.exports = {
         'la-foonte': ['var(--font-la-foonte)', 'sans-serif'],
         'sans': ['-apple-system', 'BlinkMacSystemFont', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
       },
+      colors: {
+        gold: {
+          DEFAULT: '#C9A961',
+          soft: '#D9BD7E',
+          deep: '#9A7F4A',
+        },
+      },
     },
   },
   plugins: [],

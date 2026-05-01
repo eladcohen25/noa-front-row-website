@@ -13,6 +13,9 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
   const pathname = usePathname()
   const router = useRouter()
   const isHome = pathname === '/'
+  const isInquire = pathname === '/inquire'
+  const isAdmin = pathname?.startsWith('/admin') ?? false
+  const hideSiteChrome = isInquire || isAdmin
   const [isMobileDevice, setIsMobileDevice] = useState(false) // Track if mobile device
   const [isLoading, setIsLoading] = useState(true) // Start with loading true for initial load
   const [pageBlur, setPageBlur] = useState(0) // Blur value controlled around loader end
@@ -41,8 +44,10 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
     isInitialLoadRef.current = false
   }, [])
 
-  // Intercept navigation clicks
+  // Intercept navigation clicks (public site only — admin uses native routing)
   useEffect(() => {
+    if (isAdmin) return
+
     // Track if we've already handled a navigation to prevent double-firing
     let navigationHandled = false
 
@@ -103,7 +108,7 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
     return () => {
       document.removeEventListener('click', handleLinkClick, true)
     }
-  }, [pathname, router])
+  }, [pathname, router, isAdmin])
 
   useEffect(() => {
     // Skip the initial mount
@@ -177,13 +182,22 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
     })
   }, [])
 
+  // Admin uses its own layout chrome (AdminNav). Skip the public site's
+  // LeftNav, LogoHeader, mobile enter overlay, custom cursor, and loader.
+  // The .admin-area class triggers a CSS counter-rule in globals.css that
+  // overrides the global `cursor: none !important` from the public custom
+  // cursor.
+  if (isAdmin) {
+    return <div className="admin-area min-h-screen bg-zinc-50">{children}</div>
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Custom cursor - hidden on mobile and respects reduced-motion */}
       <CustomCursor />
 
       {/* Mobile Enter Overlay - only shows on mobile, first visit */}
-      <MobileEnterOverlay onEnter={handleMobileEnter} />
+      {!hideSiteChrome && <MobileEnterOverlay onEnter={handleMobileEnter} />}
 
       {/* Loader overlay - always sits above current content */}
       {isLoading && (
@@ -204,13 +218,13 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
           transition: 'filter 500ms cubic-bezier(0.25, 0.1, 0.25, 1)',
         }}
       >
-        {/* Navigation - handles its own mobile/desktop rendering */}
-        <LeftNav />
-        
+        {/* Navigation - hidden on /inquire for full-bleed form */}
+        {!hideSiteChrome && <LeftNav />}
+
         {/* Main content */}
-        <main className={pathname === '/' ? 'fixed inset-0' : 'ml-0 md:ml-64'}>
-          {/* Logo header - shows text on home, 3D video on other pages */}
-          <LogoHeader />
+        <main className={isHome ? 'fixed inset-0' : hideSiteChrome ? '' : 'ml-0 md:ml-64'}>
+          {/* Logo header - hidden on /inquire */}
+          {!hideSiteChrome && <LogoHeader />}
           <div>{children}</div>
         </main>
       </div>

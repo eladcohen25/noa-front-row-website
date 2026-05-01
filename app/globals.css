@@ -126,3 +126,28 @@ body {
   }
 }
 
+/* Admin area uses the OS cursor — restore it everywhere under .admin-area. */
+.admin-area,
+.admin-area *,
+.admin-area *::before,
+.admin-area *::after {
+  cursor: auto !important;
+}
+.admin-area a,
+.admin-area button,
+.admin-area [role='button'],
+.admin-area label,
+.admin-area summary,
+.admin-area select {
+  cursor: pointer !important;
+}
+.admin-area input,
+.admin-area textarea {
+  cursor: text !important;
+}
+.admin-area input[type='checkbox'],
+.admin-area input[type='radio'],
+.admin-area input[type='file'] {
+  cursor: pointer !important;
+}
+

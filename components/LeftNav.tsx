@@ -25,6 +25,7 @@ const navItems: NavItem[] = [
   { href: '/services', label: 'Services' },
   ...(SHOW_EXPERIENCES_PAGE ? [{ href: '/experiences', label: 'Experiences' }] : []),
   { href: '/lookbook', label: 'FW26 @ Bel-Aire' },
+  { href: '/models', label: 'Models' },
   { href: '/contact', label: 'Contact' },
 ]
 
