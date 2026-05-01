@@ -150,19 +150,13 @@ export async function POST(req: NextRequest) {
       full_name: String(payload.fullName ?? ''),
       email: String(payload.email ?? ''),
       phone: String(payload.phone ?? ''),
-      pronouns:
-        payload.pronouns === 'other' && payload.pronounsOther
-          ? `other: ${payload.pronounsOther}`
-          : String(payload.pronouns ?? ''),
       gender_identity:
         payload.genderIdentity === 'Prefer to self-describe' && payload.genderIdentityOther
           ? `Self-described: ${payload.genderIdentityOther}`
-          : (payload.genderIdentity as string | null) ?? null,
+          : String(payload.genderIdentity ?? ''),
       city: String(payload.city ?? ''),
-      state_region: String(payload.stateRegion ?? ''),
-      country: String(payload.country ?? 'United States'),
       date_of_birth: dob,
-      is_adult: true,
+      age_at_submission: ageFromDob(dob),
       height_cm: Number(payload.heightCm),
       bust_cm: Number(payload.bustCm),
       waist_cm: Number(payload.waistCm),
@@ -179,24 +173,11 @@ export async function POST(req: NextRequest) {
         payload.eyeColor === 'Other' && payload.eyeColorOther
           ? `Other: ${payload.eyeColorOther}`
           : String(payload.eyeColor ?? ''),
-      heritage: (payload.heritage as string | null) || null,
       modeling_experience: String(payload.modelingExperience ?? ''),
       has_agency: !!payload.hasAgency,
       agency_name: payload.hasAgency
         ? (payload.agencyName as string | null) || null
         : null,
-      unions: Array.isArray(payload.unions) ? (payload.unions as string[]) : [],
-      special_skills: Array.isArray(payload.specialSkills)
-        ? (payload.specialSkills as string[])
-        : [],
-      special_skills_notes: [
-        payload.specialSkillsOther ? `Other: ${payload.specialSkillsOther}` : null,
-        payload.languagesNote ? `Languages: ${payload.languagesNote}` : null,
-        payload.unionsOther ? `Union (other): ${payload.unionsOther}` : null,
-      ]
-        .filter(Boolean)
-        .join('\n') || null,
-      markings_notes: (payload.markingsNotes as string | null) || null,
       headshot_url: slotPaths['headshot'] || '',
       fullbody_url: slotPaths['fullbody'] || '',
       profile_left_url: slotPaths['profile-left'] || '',
@@ -206,8 +187,7 @@ export async function POST(req: NextRequest) {
       tiktok_handle: tiktokHandle,
       portfolio_url: portfolio,
       travel_availability: String(payload.travelAvailability ?? ''),
-      earliest_available: (payload.earliestAvailable as string | null) || null,
-      why_tfr: String(payload.whyTfr ?? ''),
+      why_tfr: (payload.whyTfr as string | null)?.trim() || null,
       how_heard:
         payload.howHeard === 'Other' && payload.howHeardOther
           ? `Other: ${payload.howHeardOther}`
@@ -270,10 +250,7 @@ export async function POST(req: NextRequest) {
             email: insertRow.email,
             phone: insertRow.phone,
             city: insertRow.city,
-            state: insertRow.state_region,
-            country: insertRow.country,
-            age: ageFromDob(insertRow.date_of_birth),
-            pronouns: insertRow.pronouns,
+            age: insertRow.age_at_submission,
             heightCm: insertRow.height_cm,
             bustCm: insertRow.bust_cm,
             waistCm: insertRow.waist_cm,
@@ -289,7 +266,7 @@ export async function POST(req: NextRequest) {
             agencyName: insertRow.agency_name,
             instagramHandle: insertRow.instagram_handle,
             travelAvailability: insertRow.travel_availability,
-            whyTfr: insertRow.why_tfr,
+            whyTfr: insertRow.why_tfr ?? '',
             photoUrls: photoLinks,
             createdAt,
           }),

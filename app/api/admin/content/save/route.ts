@@ -34,20 +34,39 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Bad request' }, { status: 400 })
   }
 
-  const updates = Object.entries(body.values).map(([key, value]) => ({
-    key,
-    value,
-    updated_by: profileResult.user.id,
-  }))
-  if (updates.length === 0) {
+  const entries = Object.entries(body.values)
+  if (entries.length === 0) {
     return NextResponse.json({ ok: true, updated: 0 })
   }
 
-  const { error } = await supabase
-    .from('site_content')
-    .upsert(updates, { onConflict: 'key' })
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+  // Per-row UPDATE rather than upsert — we only have key + value here,
+  // and a bulk upsert would fail the NOT NULL check on page/label/type
+  // even for rows that already exist (Postgres evaluates the INSERT
+  // branch of `INSERT … ON CONFLICT DO UPDATE` first). The visual editor
+  // only ever modifies pre-seeded keys, so plain UPDATE is correct.
+  const failures: { key: string; error: string }[] = []
+  let updated = 0
+  for (const [key, value] of entries) {
+    const { error: rowError, count } = await supabase
+      .from('site_content')
+      .update({ value, updated_by: profileResult.user.id }, { count: 'exact' })
+      .eq('key', key)
+    if (rowError) {
+      failures.push({ key, error: rowError.message })
+    } else {
+      updated += count ?? 0
+    }
+  }
+  if (failures.length > 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Failed to update ${failures.length} key(s): ${failures
+          .map((f) => `${f.key} (${f.error})`)
+          .join('; ')}`,
+      },
+      { status: 500 },
+    )
   }
 
   const path = PAGE_TO_PATH[body.page]
@@ -59,5 +78,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, updated: updates.length })
+  return NextResponse.json({ ok: true, updated })
 }

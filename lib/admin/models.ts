@@ -36,10 +36,7 @@ export interface ModelRow {
   full_name: string
   email: string
   phone: string
-  pronouns: string
   city: string
-  state_region: string
-  country: string
   date_of_birth: string
   age_at_submission: number | null
   height_cm: number
@@ -52,14 +49,9 @@ export interface ModelRow {
   shoe_size_us: number
   hair_color: string
   eye_color: string
-  heritage: string | null
   modeling_experience: string
   has_agency: boolean
   agency_name: string | null
-  unions: string[] | null
-  special_skills: string[] | null
-  special_skills_notes: string | null
-  markings_notes: string | null
   headshot_url: string
   fullbody_url: string
   profile_left_url: string
@@ -69,8 +61,7 @@ export interface ModelRow {
   tiktok_handle: string | null
   portfolio_url: string | null
   travel_availability: string
-  earliest_available: string | null
-  why_tfr: string
+  why_tfr: string | null
   how_heard: string
   additional_notes: string | null
   status: ModelStatus

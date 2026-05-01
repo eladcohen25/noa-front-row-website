@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence } from 'framer-motion'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import BackButton from '@/components/inquiry/BackButton'
 import ContinueButton from '@/components/inquiry/ContinueButton'
 import ExitButton from '@/components/inquiry/ExitButton'
@@ -22,7 +22,17 @@ export default function ModelForm() {
 
   const steps = MODEL_FORM_STEPS
   const currentStep = steps[stepIndex]
-  const isLastQuestion = stepIndex === steps.length - 1
+
+  // The "last visible question" depends on which steps are hidden right now
+  // (e.g. agencyName is hidden when hasAgency === false).
+  const lastVisibleIndex = useMemo(() => {
+    for (let i = steps.length - 1; i >= 0; i--) {
+      if (!steps[i].isHidden?.(state)) return i
+    }
+    return steps.length - 1
+  }, [steps, state])
+
+  const isLastQuestion = stepIndex >= lastVisibleIndex
 
   const submit = useCallback(async () => {
     setPhase('submitting')
@@ -57,14 +67,22 @@ export default function ModelForm() {
   const advance = useCallback(() => {
     if (!currentStep) return
     if (!currentStep.isValid(state) && !currentStep.isOptional) return
-    if (isLastQuestion) {
+    if (stepIndex >= lastVisibleIndex) {
       submit()
       return
     }
-    const nextIndex = stepIndex + 1
+    // Find the next non-hidden step.
+    let nextIndex = stepIndex + 1
+    while (nextIndex < steps.length && steps[nextIndex].isHidden?.(state)) {
+      nextIndex++
+    }
+    if (nextIndex >= steps.length) {
+      submit()
+      return
+    }
     indexHistoryRef.current.push(nextIndex)
     setStepIndex(nextIndex)
-  }, [currentStep, state, isLastQuestion, stepIndex, submit])
+  }, [currentStep, state, stepIndex, lastVisibleIndex, steps, submit])
 
   const goBack = useCallback(() => {
     if (indexHistoryRef.current.length <= 1) return
@@ -80,6 +98,8 @@ export default function ModelForm() {
       </main>
     )
   }
+
+  const hideContinue = currentStep?.hideContinue?.(state) === true
 
   return (
     <main className="bg-white relative">
@@ -101,7 +121,7 @@ export default function ModelForm() {
 
       <AnimatePresence mode="wait">
         {phase === 'submitting' ? (
-          <StepWrapper key="submitting" stepKey="submitting" prompt="Sending\u2026" helper="One moment">
+          <StepWrapper key="submitting" stepKey="submitting" prompt="Sending…" helper="One moment">
             <div className="text-sm text-black/50">Uploading your photos and submitting.</div>
           </StepWrapper>
         ) : phase === 'error' ? (
@@ -123,13 +143,15 @@ export default function ModelForm() {
             >
               <currentStep.Component state={state} setState={setState} advance={advance} />
 
-              <ContinueButton
-                label={isLastQuestion ? 'Submit' : 'Continue'}
-                disabled={!currentStep.isValid(state)}
-                onClick={advance}
-                skipLabel={currentStep.isOptional ? 'Skip' : undefined}
-                onSkip={currentStep.isOptional ? advance : undefined}
-              />
+              {!hideContinue && (
+                <ContinueButton
+                  label={isLastQuestion ? 'Submit' : 'Continue'}
+                  disabled={!currentStep.isValid(state)}
+                  onClick={advance}
+                  skipLabel={currentStep.isOptional ? 'Skip' : undefined}
+                  onSkip={currentStep.isOptional ? advance : undefined}
+                />
+              )}
             </StepWrapper>
           )
         )}

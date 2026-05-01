@@ -1,15 +1,6 @@
 import { z } from 'zod'
 import { ageFromDob } from './units'
 
-export const PRONOUN_OPTIONS = [
-  'she / her',
-  'he / him',
-  'they / them',
-  'she / they',
-  'he / they',
-  'other',
-] as const
-
 export const GENDER_IDENTITY_OPTIONS = [
   'Woman',
   'Man',
@@ -38,20 +29,6 @@ export const EYE_COLORS = [
   'Other',
 ] as const
 
-export const UNIONS = ['SAG-AFTRA', 'Equity', 'Other', 'None / not applicable'] as const
-
-export const SPECIAL_SKILLS = [
-  'Dance',
-  'Athletics / sports',
-  'Horseback riding',
-  'Swimming',
-  'Driving (manual / motorcycle)',
-  'Music / instrument',
-  'Languages',
-  'Combat / fight choreography',
-  'Other',
-] as const
-
 export const TRAVEL_OPTIONS = [
   'Yes, anywhere',
   'Yes, within the US',
@@ -76,18 +53,24 @@ export const modelSubmissionSchema = z.object({
   fullName: z.string().min(2, 'Required'),
   email: z.string().regex(emailRe, 'Enter a valid email'),
   phone: z.string().min(7, 'Enter a valid phone number'),
-  pronouns: z.enum(PRONOUN_OPTIONS),
-  pronounsOther: z.string().optional().nullable(),
-  genderIdentity: z.enum(GENDER_IDENTITY_OPTIONS).optional().nullable(),
+  genderIdentity: z.enum(GENDER_IDENTITY_OPTIONS),
   genderIdentityOther: z.string().optional().nullable(),
   city: z.string().min(1, 'Required'),
-  stateRegion: z.string().min(1, 'Required'),
-  country: z.string().min(1, 'Required'),
-  dateOfBirth: z.string().refine((v) => {
-    const d = new Date(v)
-    return !Number.isNaN(d.getTime())
-  }, 'Enter a valid date'),
-  isAdult: z.boolean(),
+  dateOfBirth: z
+    .string()
+    .refine((v) => {
+      const d = new Date(v)
+      return !Number.isNaN(d.getTime())
+    }, 'Enter a valid date')
+    .refine((v) => {
+      // Server-side guard: reject under-18 directly via the schema.
+      const d = new Date(v)
+      const now = new Date()
+      let age = now.getFullYear() - d.getFullYear()
+      const m = now.getMonth() - d.getMonth()
+      if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--
+      return age >= 18
+    }, 'You must be 18 or older'),
 
   // Stats — always cm in the persisted form
   heightCm: z.number().min(120).max(230),
@@ -106,21 +89,11 @@ export const modelSubmissionSchema = z.object({
   hairColorOther: z.string().optional().nullable(),
   eyeColor: z.enum(EYE_COLORS),
   eyeColorOther: z.string().optional().nullable(),
-  heritage: z.string().optional().nullable(),
 
   // Experience
   modelingExperience: z.string().min(1, 'Required'),
   hasAgency: z.boolean(),
   agencyName: z.string().optional().nullable(),
-  unions: z.array(z.enum(UNIONS)).optional().default([]),
-  unionsOther: z.string().optional().nullable(),
-  specialSkills: z.array(z.enum(SPECIAL_SKILLS)).optional().default([]),
-  specialSkillsOther: z.string().optional().nullable(),
-  languagesNote: z.string().optional().nullable(),
-
-  // Markings
-  markingsNotes: z.string().optional().nullable(),
-
   // Links
   instagramHandle: z
     .string()
@@ -134,10 +107,9 @@ export const modelSubmissionSchema = z.object({
 
   // Availability
   travelAvailability: z.enum(TRAVEL_OPTIONS),
-  earliestAvailable: z.string().optional().nullable(),
 
   // Closing
-  whyTfr: z.string().min(1, 'Required'),
+  whyTfr: z.string().optional().nullable(),
   howHeard: z.enum(HOW_HEARD_OPTIONS),
   howHeardOther: z.string().optional().nullable(),
   additionalNotes: z.string().optional().nullable(),

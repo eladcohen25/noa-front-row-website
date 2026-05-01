@@ -72,6 +72,39 @@ export default function AdminNav({ email, permissions }: AdminNavProps) {
         </nav>
 
         <div className="flex items-center gap-3">
+          <a
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-zinc-500 hover:text-black inline-flex items-center gap-1"
+            title="Open the public site in a new tab"
+          >
+            View site
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path
+                d="M3 1H9V7"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M9 1L4 6"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M7 8H1V2"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </a>
+          <span className="text-xs text-zinc-300 hidden md:inline">|</span>
           <span className="text-xs text-zinc-500 hidden md:block">{email}</span>
           <AdminButton variant="ghost" size="sm" onClick={handleSignOut} loading={signingOut}>
             Sign out

@@ -70,10 +70,20 @@ export default function PageEditor({
     setSaving(true)
     const supabase = createBrowserClient()
 
+    // Send the FULL row on upsert. Postgres evaluates the INSERT branch
+    // of `INSERT … ON CONFLICT DO UPDATE` first and rejects rows that
+    // violate NOT NULL on page / label / type, even when the row already
+    // exists and the actual operation will be an UPDATE.
     const updates = dirtyKeys.map((key) => {
       const field = fields.find((f) => f.key === key)!
       return {
         key,
+        page: field.page,
+        label: field.label,
+        type: field.type,
+        description: field.description,
+        sort_order: field.sort_order,
+        required: field.required,
         value: normalizeFieldValue(field, values[key]),
         updated_by: userId,
       }

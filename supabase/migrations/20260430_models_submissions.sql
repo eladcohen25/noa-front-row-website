@@ -11,15 +11,13 @@ create table if not exists public.tfr_model_submissions (
   full_name text not null,
   email text not null,
   phone text not null,
-  pronouns text not null,
-  gender_identity text,
+  gender_identity text not null,
   city text not null,
-  state_region text not null,
-  country text not null default 'United States',
   date_of_birth date not null,
-  age_at_submission int generated always as
-    (extract(year from age(date_of_birth))::int) stored,
-  is_adult boolean not null,
+  -- Age locked at submission time (computed in API). Plain int so it
+  -- can be indexed; postgres rejects generated cols using age() because
+  -- age() reads now() and is therefore not immutable.
+  age_at_submission int not null,
 
   -- Stats (always stored in cm; UI handles unit toggle)
   height_cm numeric(5,2) not null,
@@ -36,18 +34,13 @@ create table if not exists public.tfr_model_submissions (
   -- Appearance
   hair_color text not null,
   eye_color text not null,
-  heritage text,
 
   -- Experience
   modeling_experience text not null,
   has_agency boolean not null,
   agency_name text,
-  unions text[] default '{}',
-  special_skills text[] default '{}',
-  special_skills_notes text,
 
-  -- Markings + photos
-  markings_notes text,
+  -- Photos
   headshot_url text not null,
   fullbody_url text not null,
   profile_left_url text not null,
@@ -61,10 +54,9 @@ create table if not exists public.tfr_model_submissions (
 
   -- Availability
   travel_availability text not null,
-  earliest_available date,
 
   -- Closing
-  why_tfr text not null,
+  why_tfr text,
   how_heard text not null,
   additional_notes text,
 

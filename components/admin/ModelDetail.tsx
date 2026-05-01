@@ -108,13 +108,12 @@ export default function ModelDetail({
 
           {/* Identity */}
           <Card title="Identity">
-            <Row label="Pronouns" value={row.pronouns} />
             {row.gender_identity && <Row label="Gender" value={row.gender_identity} />}
             <Row
               label="DOB"
               value={`${new Date(row.date_of_birth).toLocaleDateString()} (age ${row.age_at_submission ?? '—'})`}
             />
-            <Row label="City" value={`${row.city}, ${row.state_region}, ${row.country}`} />
+            <Row label="City" value={row.city} />
             <Row
               label="Email"
               value={
@@ -153,7 +152,6 @@ export default function ModelDetail({
           <Card title="Appearance">
             <Row label="Hair" value={row.hair_color} />
             <Row label="Eye" value={row.eye_color} />
-            {row.heritage && <Row label="Self-described" value={row.heritage} />}
           </Card>
 
           {/* Experience */}
@@ -162,54 +160,7 @@ export default function ModelDetail({
               {row.modeling_experience}
             </p>
             <Row label="Agency" value={row.has_agency ? row.agency_name || 'Yes' : 'No'} />
-            {(row.unions?.length ?? 0) > 0 && (
-              <Row
-                label="Unions"
-                value={
-                  <div className="flex flex-wrap gap-1.5">
-                    {(row.unions ?? []).map((u) => (
-                      <span
-                        key={u}
-                        className="text-xs bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-full"
-                      >
-                        {u}
-                      </span>
-                    ))}
-                  </div>
-                }
-              />
-            )}
-            {(row.special_skills?.length ?? 0) > 0 && (
-              <Row
-                label="Skills"
-                value={
-                  <div className="flex flex-wrap gap-1.5">
-                    {(row.special_skills ?? []).map((s) => (
-                      <span
-                        key={s}
-                        className="text-xs bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-full"
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                }
-              />
-            )}
-            {row.special_skills_notes && (
-              <Row
-                label="Notes"
-                value={<span className="whitespace-pre-wrap">{row.special_skills_notes}</span>}
-              />
-            )}
           </Card>
-
-          {/* Markings */}
-          {row.markings_notes && (
-            <Card title="Visible markings">
-              <p className="text-sm whitespace-pre-wrap text-zinc-800">{row.markings_notes}</p>
-            </Card>
-          )}
 
           {/* Links */}
           <Card title="Links">
@@ -261,15 +212,14 @@ export default function ModelDetail({
           {/* Availability */}
           <Card title="Availability">
             <Row label="Travel" value={row.travel_availability} />
-            {row.earliest_available && (
-              <Row label="Earliest" value={new Date(row.earliest_available).toLocaleDateString()} />
-            )}
           </Card>
 
           {/* Closing */}
-          <Card title="Why TFR">
-            <p className="text-sm whitespace-pre-wrap text-zinc-800">{row.why_tfr}</p>
-          </Card>
+          {row.why_tfr && (
+            <Card title="Why TFR">
+              <p className="text-sm whitespace-pre-wrap text-zinc-800">{row.why_tfr}</p>
+            </Card>
+          )}
           <Card title="How they heard">
             <p className="text-sm text-zinc-800">{row.how_heard}</p>
           </Card>

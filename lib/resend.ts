@@ -180,10 +180,7 @@ interface ModelEmailArgs {
   email: string
   phone: string
   city: string
-  state: string
-  country: string
   age: number
-  pronouns: string
   heightCm: number
   bustCm: number
   waistCm: number
@@ -230,13 +227,13 @@ export function buildModelTfrEmailHtml(args: ModelEmailArgs): string {
   <div style="max-width:680px;margin:0 auto;background:#fff;border:1px solid #eee;">
     <div style="padding:24px;border-bottom:1px solid #eee;">
       <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#999;">New model submission</p>
-      <h1 style="margin:0;font-size:22px;font-weight:400;color:#000;">${escapeHtml(args.fullName)} — ${escapeHtml(args.pronouns)}, age ${args.age}</h1>
+      <h1 style="margin:0;font-size:22px;font-weight:400;color:#000;">${escapeHtml(args.fullName)} — age ${args.age}</h1>
     </div>
     <div style="padding:16px 24px;">${photosBlock}</div>
     <table style="width:100%;border-collapse:collapse;">
       ${row('Email', args.email)}
       ${row('Phone', args.phone)}
-      ${row('Location', `${args.city}, ${args.state}, ${args.country}`)}
+      ${row('Location', args.city)}
       ${row('Height', `${cmToFt(args.heightCm)} (${args.heightCm} cm)`)}
       ${row('Bust / Waist / Hips', `${args.bustCm} / ${args.waistCm} / ${args.hipsCm} cm`)}
       ${row('Tops / Bottoms / Dress', `${args.sizeTops} / ${args.sizeBottoms} / ${args.sizeDressSuit}`)}
@@ -249,8 +246,12 @@ export function buildModelTfrEmailHtml(args: ModelEmailArgs): string {
     <div style="padding:16px 24px;border-top:1px solid #eee;">
       <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#999;">Experience</p>
       <p style="margin:0 0 16px;font-size:14px;color:#000;line-height:1.5;white-space:pre-wrap;">${escapeHtml(args.modelingExperience)}</p>
-      <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#999;">Why TFR</p>
-      <p style="margin:0 0 16px;font-size:14px;color:#000;line-height:1.5;white-space:pre-wrap;">${escapeHtml(args.whyTfr)}</p>
+      ${
+        args.whyTfr.trim()
+          ? `<p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#999;">Why TFR</p>
+      <p style="margin:0 0 16px;font-size:14px;color:#000;line-height:1.5;white-space:pre-wrap;">${escapeHtml(args.whyTfr)}</p>`
+          : ''
+      }
       <p style="margin:0;font-size:12px;color:#999;">Submitted ${escapeHtml(args.createdAt)}. Reply to this email to respond directly.</p>
     </div>
   </div>
