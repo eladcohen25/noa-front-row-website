@@ -55,13 +55,26 @@ export default function ModelForm() {
         method: 'POST',
         body: fd,
       })
-      const data = await res.json().catch(() => ({}))
+      const text = await res.text()
+      let data: { ok?: boolean; error?: string } = {}
+      try {
+        data = text ? (JSON.parse(text) as typeof data) : {}
+      } catch {
+        // Non-JSON body (e.g. Vercel HTML 504 page). Fall through.
+      }
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || 'Something went wrong')
+        const fallback =
+          res.status === 504 || res.status === 408
+            ? 'The request timed out. Try again with smaller photos (under 10 MB each) or a faster connection.'
+            : `Server returned ${res.status} ${res.statusText || ''}`.trim()
+        throw new Error(data.error || fallback)
       }
       setPhase('done')
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Something went wrong'
+      const message =
+        e instanceof Error
+          ? e.message
+          : 'Could not reach the server. Check your connection and try again.'
       setSubmitError(message)
       setPhase('error')
     }

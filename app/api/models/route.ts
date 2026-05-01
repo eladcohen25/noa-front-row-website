@@ -15,6 +15,9 @@ import { ageFromDob } from '@/lib/models/units'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+// Photo uploads to Supabase Storage can take longer than Vercel's default
+// 10s function timeout on Hobby. Pro plans honor up to 300s; Hobby caps at 60.
+export const maxDuration = 60
 
 const STORAGE_BUCKET = 'tfr-model-photos'
 const MAX_BYTES = 10 * 1024 * 1024
@@ -113,37 +116,54 @@ export async function POST(req: NextRequest) {
     if (profileLeft) slotUploads.push({ slot: 'profile-left', file: profileLeft })
     if (profileRight) slotUploads.push({ slot: 'profile-right', file: profileRight })
 
+    // Upload all required slots in parallel.
+    const slotResults = await Promise.all(
+      slotUploads.map(async ({ slot, file }) => {
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+        const path = `${submissionId}/${slot}.${ext}`
+        const buf = Buffer.from(await file.arrayBuffer())
+        const { error } = await supabase.storage
+          .from(STORAGE_BUCKET)
+          .upload(path, buf, {
+            contentType: file.type || 'image/jpeg',
+            upsert: false,
+          })
+        return { slot, path, error }
+      }),
+    )
     const slotPaths: Record<string, string> = {}
-    for (const { slot, file } of slotUploads) {
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-      const path = `${submissionId}/${slot}.${ext}`
-      const buf = Buffer.from(await file.arrayBuffer())
-      const { error } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .upload(path, buf, { contentType: file.type || 'image/jpeg', upsert: false })
-      if (error) {
-        console.error('photo upload error', slot, error)
+    for (const r of slotResults) {
+      if (r.error) {
+        console.error('photo upload error', r.slot, r.error)
         return NextResponse.json(
-          { ok: false, error: 'Photo upload failed.' },
+          { ok: false, error: `Photo upload failed (${r.slot}): ${r.error.message}` },
           { status: 500 },
         )
       }
-      slotPaths[slot] = path
+      slotPaths[r.slot] = r.path
     }
+
+    const additionalResults = await Promise.all(
+      additional.map(async (file, i) => {
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+        const path = `${submissionId}/additional-${i + 1}.${ext}`
+        const buf = Buffer.from(await file.arrayBuffer())
+        const { error } = await supabase.storage
+          .from(STORAGE_BUCKET)
+          .upload(path, buf, {
+            contentType: file.type || 'image/jpeg',
+            upsert: false,
+          })
+        return { path, error }
+      }),
+    )
     const additionalPaths: string[] = []
-    for (let i = 0; i < additional.length; i++) {
-      const file = additional[i]
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-      const path = `${submissionId}/additional-${i + 1}.${ext}`
-      const buf = Buffer.from(await file.arrayBuffer())
-      const { error } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .upload(path, buf, { contentType: file.type || 'image/jpeg', upsert: false })
-      if (error) {
-        console.error('additional photo upload error', i, error)
+    for (const r of additionalResults) {
+      if (r.error) {
+        console.error('additional photo upload error', r.error)
         continue
       }
-      additionalPaths.push(path)
+      additionalPaths.push(r.path)
     }
 
     const igHandle = normalizeInstagramHandle(String(payload.instagramHandle ?? ''))
