@@ -15,20 +15,10 @@ import { ageFromDob } from '@/lib/models/units'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-// Photo uploads to Supabase Storage can take longer than Vercel's default
-// 10s function timeout on Hobby. Pro plans honor up to 300s; Hobby caps at 60.
-export const maxDuration = 60
+export const maxDuration = 30
 
 const STORAGE_BUCKET = 'tfr-model-photos'
-const MAX_BYTES = 10 * 1024 * 1024
 const MAX_ADDITIONAL = 4
-const ALLOWED_MIME = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/heic',
-  'image/heif',
-  'image/webp',
-])
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -37,37 +27,29 @@ function getServiceClient() {
   return createClient(url, key, { auth: { persistSession: false } })
 }
 
-function checkFile(file: File): string | null {
-  if (file.size > MAX_BYTES) return 'Photo over 10 MB'
-  if (file.type && !ALLOWED_MIME.has(file.type)) {
-    if (!file.name.match(/\.(jpe?g|png|heic|heif|webp)$/i)) return 'Unsupported photo format'
-  }
-  return null
+function isUuid(s: unknown): s is string {
+  return typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const fd = await req.formData()
-    const payloadRaw = String(fd.get('payload') || '{}')
-    let payload: Record<string, unknown> = {}
-    try {
-      payload = JSON.parse(payloadRaw)
-    } catch {
-      return NextResponse.json({ ok: false, error: 'Invalid JSON payload' }, { status: 400 })
+    const body = (await req.json().catch(() => null)) as Record<string, unknown> | null
+    if (!body) {
+      return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 })
     }
 
-    const headshot = fd.get('headshot') as File | null
-    const fullbody = fd.get('fullbody') as File | null
-    const profileLeft = fd.get('profileLeft') as File | null
-    const profileRight = fd.get('profileRight') as File | null
-    const additional = fd
-      .getAll('additional')
-      .filter((f): f is File => f instanceof File)
-      .slice(0, MAX_ADDITIONAL)
+    const payload = body as Record<string, unknown>
+    const submissionId = String(payload.submissionId ?? '')
+    const photos = (payload.photos ?? {}) as {
+      headshot?: string
+      fullbody?: string
+      profileLeft?: string
+      profileRight?: string
+      additional?: string[]
+    }
 
     const flaggedSpam = String(payload.website ?? '').trim().length > 0
 
-    // Validate Zod payload (skipped for spam; we still log them flagged).
     if (!flaggedSpam) {
       const parsed = modelSubmissionSchema.safeParse(payload)
       if (!parsed.success) {
@@ -93,78 +75,76 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!flaggedSpam) {
-      if (!headshot || !fullbody || !profileLeft || !profileRight) {
+    if (!isUuid(submissionId)) {
+      return NextResponse.json(
+        { ok: false, error: 'Missing or invalid submissionId' },
+        { status: 400 },
+      )
+    }
+
+    if (
+      !flaggedSpam &&
+      (!photos.headshot ||
+        !photos.fullbody ||
+        !photos.profileLeft ||
+        !photos.profileRight)
+    ) {
+      return NextResponse.json(
+        { ok: false, error: 'All four required photo paths must be provided.' },
+        { status: 400 },
+      )
+    }
+
+    const allPaths = [
+      photos.headshot,
+      photos.fullbody,
+      photos.profileLeft,
+      photos.profileRight,
+      ...(photos.additional ?? []).slice(0, MAX_ADDITIONAL),
+    ].filter((p): p is string => typeof p === 'string' && p.length > 0)
+
+    // Photo paths must live under the submissionId folder we issued URLs for.
+    for (const p of allPaths) {
+      if (!p.startsWith(`${submissionId}/`)) {
         return NextResponse.json(
-          { ok: false, error: 'All four required photos must be provided.' },
+          { ok: false, error: 'Photo path does not match this submission' },
           { status: 400 },
         )
-      }
-      for (const f of [headshot, fullbody, profileLeft, profileRight, ...additional]) {
-        const err = checkFile(f)
-        if (err) return NextResponse.json({ ok: false, error: err }, { status: 400 })
       }
     }
 
     const supabase = getServiceClient()
-    const submissionId = crypto.randomUUID()
 
-    // Upload photos under {submissionId}/{slot}.{ext}
-    const slotUploads: { slot: string; file: File }[] = []
-    if (headshot) slotUploads.push({ slot: 'headshot', file: headshot })
-    if (fullbody) slotUploads.push({ slot: 'fullbody', file: fullbody })
-    if (profileLeft) slotUploads.push({ slot: 'profile-left', file: profileLeft })
-    if (profileRight) slotUploads.push({ slot: 'profile-right', file: profileRight })
-
-    // Upload all required slots in parallel.
-    const slotResults = await Promise.all(
-      slotUploads.map(async ({ slot, file }) => {
-        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-        const path = `${submissionId}/${slot}.${ext}`
-        const buf = Buffer.from(await file.arrayBuffer())
-        const { error } = await supabase.storage
-          .from(STORAGE_BUCKET)
-          .upload(path, buf, {
-            contentType: file.type || 'image/jpeg',
-            upsert: false,
-          })
-        return { slot, path, error }
-      }),
-    )
-    const slotPaths: Record<string, string> = {}
-    for (const r of slotResults) {
-      if (r.error) {
-        console.error('photo upload error', r.slot, r.error)
+    // Verify each photo actually exists in storage (i.e. the client uploaded it
+    // before calling us). Cheap HEAD via createSignedUrl which fails on missing.
+    if (!flaggedSpam) {
+      const checks = await Promise.all(
+        allPaths.map(async (p) => {
+          const { data, error } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .createSignedUrl(p, 60)
+          return { p, ok: !!data?.signedUrl, error }
+        }),
+      )
+      const missing = checks.filter((c) => !c.ok)
+      if (missing.length > 0) {
         return NextResponse.json(
-          { ok: false, error: `Photo upload failed (${r.slot}): ${r.error.message}` },
-          { status: 500 },
+          {
+            ok: false,
+            error: `Photos missing in storage: ${missing.map((m) => m.p).join(', ')}`,
+          },
+          { status: 400 },
         )
       }
-      slotPaths[r.slot] = r.path
     }
 
-    const additionalResults = await Promise.all(
-      additional.map(async (file, i) => {
-        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-        const path = `${submissionId}/additional-${i + 1}.${ext}`
-        const buf = Buffer.from(await file.arrayBuffer())
-        const { error } = await supabase.storage
-          .from(STORAGE_BUCKET)
-          .upload(path, buf, {
-            contentType: file.type || 'image/jpeg',
-            upsert: false,
-          })
-        return { path, error }
-      }),
-    )
-    const additionalPaths: string[] = []
-    for (const r of additionalResults) {
-      if (r.error) {
-        console.error('additional photo upload error', r.error)
-        continue
-      }
-      additionalPaths.push(r.path)
+    const slotPaths: Record<string, string> = {
+      headshot: photos.headshot ?? '',
+      fullbody: photos.fullbody ?? '',
+      'profile-left': photos.profileLeft ?? '',
+      'profile-right': photos.profileRight ?? '',
     }
+    const additionalPaths = (photos.additional ?? []).slice(0, MAX_ADDITIONAL)
 
     const igHandle = normalizeInstagramHandle(String(payload.instagramHandle ?? ''))
     const tiktokHandle = payload.tiktokHandle

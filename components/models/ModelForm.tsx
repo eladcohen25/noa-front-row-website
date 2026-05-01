@@ -10,14 +10,28 @@ import ModelEndScreen from './Steps/EndScreen'
 import { MODEL_FORM_STEPS } from './Steps/steps'
 import { INITIAL_MODEL_FORM_STATE, type ModelFormState } from '@/lib/models/types'
 import { modelFormToJsonPayload } from '@/lib/models/submit'
+import { createBrowserClient } from '@/lib/supabase/client'
 
 type Phase = 'questions' | 'submitting' | 'done' | 'error'
+
+const STORAGE_BUCKET = 'tfr-model-photos'
+
+function extOf(file: File): string {
+  const fromName = file.name.split('.').pop()?.toLowerCase() ?? ''
+  if (fromName) return fromName
+  if (file.type === 'image/png') return 'png'
+  if (file.type === 'image/webp') return 'webp'
+  if (file.type === 'image/heic') return 'heic'
+  if (file.type === 'image/heif') return 'heif'
+  return 'jpg'
+}
 
 export default function ModelForm() {
   const [state, setState] = useState<ModelFormState>(INITIAL_MODEL_FORM_STATE)
   const [stepIndex, setStepIndex] = useState(0)
   const [phase, setPhase] = useState<Phase>('questions')
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const indexHistoryRef = useRef<number[]>([0])
   // Always-fresh state ref so advance() called from a setTimeout sees the
   // latest selection — otherwise auto-advance after a click requires 2 clicks.
@@ -41,19 +55,91 @@ export default function ModelForm() {
   const submit = useCallback(async () => {
     setPhase('submitting')
     setSubmitError(null)
+    setProgress(null)
     try {
-      const fd = new FormData()
-      fd.append('payload', JSON.stringify(modelFormToJsonPayload(state)))
       const { photos } = state
-      if (photos.headshot) fd.append('headshot', photos.headshot)
-      if (photos.fullbody) fd.append('fullbody', photos.fullbody)
-      if (photos.profileLeft) fd.append('profileLeft', photos.profileLeft)
-      if (photos.profileRight) fd.append('profileRight', photos.profileRight)
-      photos.additional.forEach((file) => fd.append('additional', file))
+      if (
+        !photos.headshot ||
+        !photos.fullbody ||
+        !photos.profileLeft ||
+        !photos.profileRight
+      ) {
+        throw new Error('Please attach all four required photos before submitting.')
+      }
 
+      // Phase 1: ask the server for signed upload URLs (small JSON request,
+      // no body-size issue on Vercel).
+      const urlRes = await fetch('/api/models/photo-urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          headshot: { ext: extOf(photos.headshot) },
+          fullbody: { ext: extOf(photos.fullbody) },
+          profileLeft: { ext: extOf(photos.profileLeft) },
+          profileRight: { ext: extOf(photos.profileRight) },
+          additional: photos.additional.map((f) => ({ ext: extOf(f) })),
+        }),
+      })
+      const urlData = (await urlRes.json().catch(() => ({}))) as {
+        ok?: boolean
+        error?: string
+        submissionId?: string
+        urls?: {
+          headshot: { path: string; token: string }
+          fullbody: { path: string; token: string }
+          profileLeft: { path: string; token: string }
+          profileRight: { path: string; token: string }
+          additional: { path: string; token: string }[]
+        }
+      }
+      if (!urlRes.ok || !urlData.ok || !urlData.urls || !urlData.submissionId) {
+        throw new Error(urlData.error || 'Could not prepare upload (URLs).')
+      }
+
+      // Phase 2: upload each photo directly to Supabase Storage. This bypasses
+      // Vercel entirely so individual files can be much larger than 4.5 MB.
+      const supabase = createBrowserClient()
+      const uploads: { file: File; slot: { path: string; token: string }; label: string }[] = [
+        { file: photos.headshot, slot: urlData.urls.headshot, label: 'headshot' },
+        { file: photos.fullbody, slot: urlData.urls.fullbody, label: 'fullbody' },
+        { file: photos.profileLeft, slot: urlData.urls.profileLeft, label: 'profile left' },
+        { file: photos.profileRight, slot: urlData.urls.profileRight, label: 'profile right' },
+        ...photos.additional.map((file, i) => ({
+          file,
+          slot: urlData.urls!.additional[i]!,
+          label: `additional ${i + 1}`,
+        })),
+      ]
+      setProgress({ done: 0, total: uploads.length })
+      let done = 0
+      for (const u of uploads) {
+        const { error } = await supabase.storage
+          .from(STORAGE_BUCKET)
+          .uploadToSignedUrl(u.slot.path, u.slot.token, u.file, {
+            contentType: u.file.type || 'image/jpeg',
+          })
+        if (error) {
+          throw new Error(`Could not upload ${u.label}: ${error.message}`)
+        }
+        done++
+        setProgress({ done, total: uploads.length })
+      }
+
+      // Phase 3: submit the JSON payload referencing those paths.
       const res = await fetch('/api/models', {
         method: 'POST',
-        body: fd,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...modelFormToJsonPayload(state),
+          submissionId: urlData.submissionId,
+          photos: {
+            headshot: urlData.urls.headshot.path,
+            fullbody: urlData.urls.fullbody.path,
+            profileLeft: urlData.urls.profileLeft.path,
+            profileRight: urlData.urls.profileRight.path,
+            additional: urlData.urls.additional.map((a) => a.path),
+          },
+        }),
       })
       const text = await res.text()
       let data: { ok?: boolean; error?: string } = {}
@@ -65,8 +151,10 @@ export default function ModelForm() {
       if (!res.ok || !data.ok) {
         const fallback =
           res.status === 504 || res.status === 408
-            ? 'The request timed out. Try again with smaller photos (under 10 MB each) or a faster connection.'
-            : `Server returned ${res.status} ${res.statusText || ''}`.trim()
+            ? 'The request timed out. Try again or check your connection.'
+            : res.status === 413
+              ? 'Submission was too large. Refresh and try again.'
+              : `Server returned ${res.status} ${res.statusText || ''}`.trim()
         throw new Error(data.error || fallback)
       }
       setPhase('done')
@@ -137,7 +225,11 @@ export default function ModelForm() {
       <AnimatePresence mode="wait">
         {phase === 'submitting' ? (
           <StepWrapper key="submitting" stepKey="submitting" prompt="Sending…" helper="One moment">
-            <div className="text-sm text-black/50">Uploading your photos and submitting.</div>
+            <div className="text-sm text-black/50">
+              {progress
+                ? `Uploading photos (${progress.done}/${progress.total})…`
+                : 'Preparing your submission…'}
+            </div>
           </StepWrapper>
         ) : phase === 'error' ? (
           <StepWrapper
