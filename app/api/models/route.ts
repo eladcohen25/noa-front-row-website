@@ -224,7 +224,15 @@ export async function POST(req: NextRequest) {
 
     if (insertError) {
       console.error('insert error', insertError)
-      return NextResponse.json({ ok: false, error: 'Database error' }, { status: 500 })
+      const detail =
+        insertError.message ||
+        insertError.details ||
+        insertError.hint ||
+        'Database error'
+      return NextResponse.json(
+        { ok: false, error: `Database error: ${detail}` },
+        { status: 500 },
+      )
     }
 
     if (flaggedSpam) {

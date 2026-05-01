@@ -17,27 +17,9 @@ export default function Hero({ headline, ctaLabel, ctaHref }: HeroProps = {}) {
   const heroHeadline = headline?.trim() || DEFAULT_HEADLINE
   const heroCtaLabel = ctaLabel?.trim() || DEFAULT_CTA_LABEL
   const heroCtaHref = ctaHref?.trim() || DEFAULT_CTA_HREF
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 })
   const [subtitleVisible, setSubtitleVisible] = useState(false)
-  const heroRef = useRef<HTMLDivElement>(null)
   const blurredVideoRef = useRef<HTMLVideoElement>(null)
-  const sharpVideoRef = useRef<HTMLVideoElement>(null)
-  const animationFrameRef = useRef<number>()
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setPrefersReducedMotion(mediaQuery.matches)
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      setPrefersReducedMotion(e.matches)
-    }
-
-    mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -95,55 +77,8 @@ export default function Hero({ headline, ctaLabel, ctaHref }: HeroProps = {}) {
     }
   }, [isTouchDevice])
 
-  useEffect(() => {
-    if (prefersReducedMotion || isTouchDevice) return
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!heroRef.current) return
-      const rect = heroRef.current.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-      setMousePosition({ x, y })
-    }
-
-    const hero = heroRef.current
-    if (hero) {
-      hero.addEventListener('mousemove', handleMouseMove)
-    }
-
-    return () => {
-      if (hero) {
-        hero.removeEventListener('mousemove', handleMouseMove)
-      }
-    }
-  }, [prefersReducedMotion, isTouchDevice])
-
-  useEffect(() => {
-    if (prefersReducedMotion || isTouchDevice) return
-
-    const lerp = (start: number, end: number, factor: number) =>
-      start + (end - start) * factor
-
-    const updateSpotlight = () => {
-      setSpotlightPosition((prev) => ({
-        x: lerp(prev.x, mousePosition.x, 0.1),
-        y: lerp(prev.y, mousePosition.y, 0.1),
-      }))
-      animationFrameRef.current = requestAnimationFrame(updateSpotlight)
-    }
-
-    animationFrameRef.current = requestAnimationFrame(updateSpotlight)
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
-    }
-  }, [mousePosition, prefersReducedMotion, isTouchDevice])
-
   return (
     <div
-      ref={heroRef}
       className={`relative h-full w-full overflow-hidden ${isTouchDevice ? 'bg-white' : 'bg-black'}`}
       style={{ isolation: 'isolate' }}
     >
@@ -156,29 +91,11 @@ export default function Hero({ headline, ctaLabel, ctaHref }: HeroProps = {}) {
         preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
         style={{
-          filter: isTouchDevice ? 'blur(5px)' : 'blur(12px)',
+          filter: isTouchDevice ? 'blur(3px)' : 'blur(7px)',
         }}
       >
         <source src="/home%20vid.mp4" type="video/mp4" />
       </video>
-
-      {!prefersReducedMotion && !isTouchDevice && (
-        <video
-          ref={sharpVideoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-          style={{
-            maskImage: `radial-gradient(ellipse 350px 280px at ${spotlightPosition.x}px ${spotlightPosition.y}px, black 0%, transparent 70%)`,
-            WebkitMaskImage: `radial-gradient(ellipse 350px 280px at ${spotlightPosition.x}px ${spotlightPosition.y}px, black 0%, transparent 70%)`,
-          }}
-        >
-          <source src="/home%20vid.mp4" type="video/mp4" />
-        </video>
-      )}
 
       <div className="absolute inset-0 flex flex-col items-center justify-end pointer-events-none">
         <div className="text-center space-y-8 pointer-events-auto pb-32 md:pb-32 px-6 md:px-12" style={isTouchDevice ? { paddingBottom: '15vh' } : undefined}>

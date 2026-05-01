@@ -112,7 +112,6 @@ export default function ModelDetail({
 
           {/* Identity */}
           <Card title="Identity">
-            <Row label="Pronouns" value={row.pronouns} />
             {row.gender_identity && <Row label="Gender" value={row.gender_identity} />}
             <Row
               label="DOB"

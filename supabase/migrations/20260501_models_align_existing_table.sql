@@ -69,9 +69,13 @@ exception
   when others then null;
 end $$;
 
--- If why_tfr was nullable but should be required for new rows:
--- update public.tfr_model_submissions set why_tfr = '' where why_tfr is null;
--- alter table public.tfr_model_submissions alter column why_tfr set not null;
+-- why_tfr is now optional on the public form.
+do $$
+begin
+  execute 'alter table public.tfr_model_submissions alter column why_tfr drop not null';
+exception
+  when others then null;
+end $$;
 
 create index if not exists tfr_model_submissions_state_idx
   on public.tfr_model_submissions (state_region);

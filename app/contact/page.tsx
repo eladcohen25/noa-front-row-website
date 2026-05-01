@@ -1,9 +1,11 @@
-import ContactContent, {
-  CONTACT_FALLBACK_IMAGES,
-  type ContactPerson,
-} from '@/components/ContactContent'
+import ContactContent, { type ContactPerson } from '@/components/ContactContent'
 import PreviewBanner from '@/components/admin/PreviewBanner'
 import { getPageContent, isPreviewing } from '@/lib/admin/content'
+
+const CONTACT_FALLBACK_IMAGES = {
+  noaCohen: '/Contact%20Page%20Photos/noa-cohen.jpg',
+  theFrontRowLv: '/Contact%20Page%20Photos/final%20contact%20photo.png',
+}
 
 export const revalidate = 60
 

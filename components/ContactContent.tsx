@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import ScrollReveal from '@/components/ScrollReveal'
 import { useState, useEffect } from 'react'
 
@@ -65,6 +66,17 @@ export default function ContactContent({ headline, contacts }: ContactContentPro
           </ScrollReveal>
         ))}
       </div>
+
+      <div className="mt-16 md:mt-20 flex justify-center">
+        <ScrollReveal>
+          <Link
+            href="/inquire"
+            className="inline-block px-8 py-3 rounded-full text-xs uppercase tracking-wider text-black border border-black/30 hover:bg-black/10 transition-colors"
+          >
+            Inquire now
+          </Link>
+        </ScrollReveal>
+      </div>
     </div>
   )
 }
@@ -102,4 +114,3 @@ function ContactCard({ contact }: { contact: ContactPerson }) {
   )
 }
 
-export const CONTACT_FALLBACK_IMAGES = CONTACT_IMAGES

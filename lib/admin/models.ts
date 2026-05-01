@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 export const MODEL_STATUSES = [
   'new',
@@ -36,7 +36,7 @@ export interface ModelRow {
   full_name: string
   email: string
   phone: string
-  pronouns: string
+  pronouns: string | null
   gender_identity: string | null
   city: string
   state_region: string | null
@@ -173,16 +173,32 @@ export async function getModelSubmission(
   return (data as ModelRow | null) ?? null
 }
 
+/**
+ * The model photo bucket is private, and we don't expose storage.objects via
+ * RLS. Sign URLs with the service role so the admin UI can render thumbnails
+ * and the lightbox. Falls back to the user-session client if env vars are
+ * missing (mostly for tests / local without service role).
+ */
 export async function signPhotoUrls(
   supabase: SupabaseClient,
   paths: string[],
 ): Promise<Record<string, string>> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const signer = url && serviceKey
+    ? createClient(url, serviceKey, { auth: { persistSession: false } })
+    : supabase
+
   const out: Record<string, string> = {}
   for (const path of paths) {
     if (!path) continue
-    const { data } = await supabase.storage
+    const { data, error } = await signer.storage
       .from('tfr-model-photos')
       .createSignedUrl(path, 60 * 60)
+    if (error) {
+      console.error('signPhotoUrls error', path, error.message)
+      continue
+    }
     if (data?.signedUrl) out[path] = data.signedUrl
   }
   return out
