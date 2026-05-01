@@ -47,6 +47,12 @@ export const PAGE_GROUPS: PageGroup[] = [
     description: 'Hero label/title/CTA, editorial statement, section dates, and footer text.',
   },
   {
+    key: 'models',
+    label: 'Models (casting)',
+    livePath: '/models',
+    description: 'Intro headline and body for the public model submission page.',
+  },
+  {
     key: 'contact',
     label: 'Contact / Footer',
     livePath: '/contact',

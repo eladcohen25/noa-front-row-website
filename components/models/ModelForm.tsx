@@ -2,7 +2,6 @@
 
 import { AnimatePresence } from 'framer-motion'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import BackButton from '@/components/inquiry/BackButton'
 import ContinueButton from '@/components/inquiry/ContinueButton'
 import ExitButton from '@/components/inquiry/ExitButton'
 import ProgressBar from '@/components/inquiry/ProgressBar'
@@ -10,6 +9,7 @@ import StepWrapper from '@/components/inquiry/StepWrapper'
 import ModelEndScreen from './Steps/EndScreen'
 import { MODEL_FORM_STEPS } from './Steps/steps'
 import { INITIAL_MODEL_FORM_STATE, type ModelFormState } from '@/lib/models/types'
+import { modelFormToJsonPayload } from '@/lib/models/submit'
 
 type Phase = 'questions' | 'submitting' | 'done' | 'error'
 
@@ -19,6 +19,10 @@ export default function ModelForm() {
   const [phase, setPhase] = useState<Phase>('questions')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const indexHistoryRef = useRef<number[]>([0])
+  // Always-fresh state ref so advance() called from a setTimeout sees the
+  // latest selection — otherwise auto-advance after a click requires 2 clicks.
+  const stateRef = useRef(state)
+  stateRef.current = state
 
   const steps = MODEL_FORM_STEPS
   const currentStep = steps[stepIndex]
@@ -39,9 +43,8 @@ export default function ModelForm() {
     setSubmitError(null)
     try {
       const fd = new FormData()
-      // Strip File objects out before stringifying.
-      const { photos, ...rest } = state
-      fd.append('payload', JSON.stringify(rest))
+      fd.append('payload', JSON.stringify(modelFormToJsonPayload(state)))
+      const { photos } = state
       if (photos.headshot) fd.append('headshot', photos.headshot)
       if (photos.fullbody) fd.append('fullbody', photos.fullbody)
       if (photos.profileLeft) fd.append('profileLeft', photos.profileLeft)
@@ -66,14 +69,14 @@ export default function ModelForm() {
 
   const advance = useCallback(() => {
     if (!currentStep) return
-    if (!currentStep.isValid(state) && !currentStep.isOptional) return
+    const latest = stateRef.current
+    if (!currentStep.isValid(latest) && !currentStep.isOptional) return
     if (stepIndex >= lastVisibleIndex) {
       submit()
       return
     }
-    // Find the next non-hidden step.
     let nextIndex = stepIndex + 1
-    while (nextIndex < steps.length && steps[nextIndex].isHidden?.(state)) {
+    while (nextIndex < steps.length && steps[nextIndex].isHidden?.(latest)) {
       nextIndex++
     }
     if (nextIndex >= steps.length) {
@@ -82,7 +85,7 @@ export default function ModelForm() {
     }
     indexHistoryRef.current.push(nextIndex)
     setStepIndex(nextIndex)
-  }, [currentStep, state, stepIndex, lastVisibleIndex, steps, submit])
+  }, [currentStep, stepIndex, lastVisibleIndex, steps, submit])
 
   const goBack = useCallback(() => {
     if (indexHistoryRef.current.length <= 1) return
@@ -104,7 +107,6 @@ export default function ModelForm() {
   return (
     <main className="bg-white relative">
       <ProgressBar current={stepIndex + 1} total={steps.length} />
-      <BackButton onClick={goBack} hidden={stepIndex === 0 || phase === 'submitting'} />
       <ExitButton hidden={phase === 'submitting'} />
 
       {/* Honeypot */}
@@ -143,15 +145,36 @@ export default function ModelForm() {
             >
               <currentStep.Component state={state} setState={setState} advance={advance} />
 
-              {!hideContinue && (
-                <ContinueButton
-                  label={isLastQuestion ? 'Submit' : 'Continue'}
-                  disabled={!currentStep.isValid(state)}
-                  onClick={advance}
-                  skipLabel={currentStep.isOptional ? 'Skip' : undefined}
-                  onSkip={currentStep.isOptional ? advance : undefined}
-                />
-              )}
+              <div className="flex items-center gap-6 mt-2 flex-wrap">
+                {stepIndex > 0 && (
+                  <button
+                    type="button"
+                    onClick={goBack}
+                    aria-label="Back to previous question"
+                    className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-black/50 hover:text-black transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M7.5 2.5L4 6L7.5 9.5"
+                        stroke="currentColor"
+                        strokeWidth="1.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span>Back</span>
+                  </button>
+                )}
+                {!hideContinue && (
+                  <ContinueButton
+                    label={isLastQuestion ? 'Submit' : 'Continue'}
+                    disabled={!currentStep.isValid(state)}
+                    onClick={advance}
+                    skipLabel={currentStep.isOptional ? 'Skip' : undefined}
+                    onSkip={currentStep.isOptional ? advance : undefined}
+                  />
+                )}
+              </div>
             </StepWrapper>
           )
         )}

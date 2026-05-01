@@ -9,7 +9,7 @@ export const GENDER_IDENTITY_OPTIONS = [
   'Prefer not to say',
 ] as const
 
-export const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
+export const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Unsure'] as const
 
 export const HAIR_COLORS = [
   'Black',
@@ -26,6 +26,20 @@ export const EYE_COLORS = [
   'Green',
   'Hazel',
   'Gray',
+  'Other',
+] as const
+
+export const UNIONS = ['SAG-AFTRA', 'Equity', 'Other', 'None / not applicable'] as const
+
+export const SPECIAL_SKILLS = [
+  'Dance',
+  'Athletics / sports',
+  'Horseback riding',
+  'Swimming',
+  'Driving (manual / motorcycle)',
+  'Music / instrument',
+  'Languages',
+  'Combat / fight choreography',
   'Other',
 ] as const
 
@@ -48,88 +62,87 @@ export const HOW_HEARD_OPTIONS = [
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const igHandleRe = /^[a-zA-Z0-9._]{1,30}$/
 
-export const modelSubmissionSchema = z.object({
-  // Identity
-  fullName: z.string().min(2, 'Required'),
-  email: z.string().regex(emailRe, 'Enter a valid email'),
-  phone: z.string().min(7, 'Enter a valid phone number'),
-  genderIdentity: z.enum(GENDER_IDENTITY_OPTIONS),
-  genderIdentityOther: z.string().optional().nullable(),
-  city: z.string().min(1, 'Required'),
-  dateOfBirth: z
-    .string()
-    .refine((v) => {
-      const d = new Date(v)
-      return !Number.isNaN(d.getTime())
-    }, 'Enter a valid date')
-    .refine((v) => {
-      // Server-side guard: reject under-18 directly via the schema.
-      const d = new Date(v)
-      const now = new Date()
-      let age = now.getFullYear() - d.getFullYear()
-      const m = now.getMonth() - d.getMonth()
-      if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--
-      return age >= 18
-    }, 'You must be 18 or older'),
+const phoneDigitsOk = (s: string) => s.replace(/\D/g, '').length >= 7
 
-  // Stats — always cm in the persisted form
-  heightCm: z.number().min(120).max(230),
-  bustCm: z.number().min(50).max(150),
-  waistCm: z.number().min(50).max(150),
-  hipsCm: z.number().min(50).max(150),
+export const modelSubmissionSchema = z
+  .object({
+    fullName: z.string().min(2, 'Required'),
+    email: z.string().regex(emailRe, 'Enter a valid email'),
+    phone: z.string().refine(phoneDigitsOk, 'Enter a valid phone number'),
+    genderIdentity: z.enum(GENDER_IDENTITY_OPTIONS),
+    genderIdentityOther: z.string().optional().nullable(),
+    city: z.string().min(1, 'Required'),
+    dateOfBirth: z
+      .string()
+      .refine((v) => !Number.isNaN(new Date(v).getTime()), 'Enter a valid date')
+      .refine((v) => ageFromDob(v) >= 18, 'You must be 18 or older'),
+    isAdult: z.literal(true),
 
-  // Sizing
-  sizeTops: z.enum(SIZE_OPTIONS),
-  sizeBottoms: z.enum(SIZE_OPTIONS),
-  sizeDressSuit: z.enum(SIZE_OPTIONS),
-  shoeSizeUs: z.number().min(4).max(18),
+    heightCm: z.number().min(120).max(230),
+    bustCm: z.number().min(50).max(150).optional().nullable(),
+    bustUnsure: z.boolean().optional().default(false),
+    waistCm: z.number().min(50).max(150).optional().nullable(),
+    waistUnsure: z.boolean().optional().default(false),
+    hipsCm: z.number().min(50).max(150).optional().nullable(),
+    hipsUnsure: z.boolean().optional().default(false),
 
-  // Appearance
-  hairColor: z.enum(HAIR_COLORS),
-  hairColorOther: z.string().optional().nullable(),
-  eyeColor: z.enum(EYE_COLORS),
-  eyeColorOther: z.string().optional().nullable(),
+    sizeTops: z.enum(SIZE_OPTIONS),
+    sizeBottoms: z.enum(SIZE_OPTIONS),
+    sizeDressSuit: z.enum(SIZE_OPTIONS),
+    shoeSizeUs: z.number().min(4).max(18),
 
-  // Experience
-  modelingExperience: z.string().min(1, 'Required'),
-  hasAgency: z.boolean(),
-  agencyName: z.string().optional().nullable(),
-  // Links
-  instagramHandle: z
-    .string()
-    .min(1, 'Required')
-    .refine((raw) => {
-      const handle = raw.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '')
-      return igHandleRe.test(handle)
-    }, 'Enter a valid Instagram handle'),
-  tiktokHandle: z.string().optional().nullable(),
-  portfolioUrl: z.string().optional().nullable(),
+    modelingExperience: z.string().min(1, 'Required'),
+    hasAgency: z.boolean(),
+    agencyName: z.string().optional().nullable(),
+    instagramHandle: z
+      .string()
+      .min(1, 'Required')
+      .refine((raw) => {
+        const handle = raw
+          .replace(/^@/, '')
+          .replace(/^https?:\/\/(www\.)?instagram\.com\//, '')
+          .replace(/\/$/, '')
+        return igHandleRe.test(handle)
+      }, 'Enter a valid Instagram handle'),
+    tiktokHandle: z.string().optional().nullable(),
+    portfolioUrl: z.string().optional().nullable(),
 
-  // Availability
-  travelAvailability: z.enum(TRAVEL_OPTIONS),
+    travelAvailability: z.enum(TRAVEL_OPTIONS),
 
-  // Closing
-  whyTfr: z.string().optional().nullable(),
-  howHeard: z.enum(HOW_HEARD_OPTIONS),
-  howHeardOther: z.string().optional().nullable(),
-  additionalNotes: z.string().optional().nullable(),
+    whyTfr: z.string().optional().nullable(),
+    howHeard: z.enum(HOW_HEARD_OPTIONS),
+    howHeardOther: z.string().optional().nullable(),
+    additionalNotes: z.string().optional().nullable(),
 
-  // Honeypot
-  website: z.string().optional().default(''),
-})
+    website: z.string().optional().default(''),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.genderIdentity === 'Prefer to self-describe' &&
+      !data.genderIdentityOther?.trim()
+    ) {
+      ctx.addIssue({ code: 'custom', path: ['genderIdentityOther'], message: 'Required' })
+    }
+    if (data.hasAgency && !data.agencyName?.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['agencyName'], message: 'Required' })
+    }
+    if (!data.bustUnsure && (data.bustCm === undefined || data.bustCm === null)) {
+      ctx.addIssue({ code: 'custom', path: ['bustCm'], message: 'Enter a measurement or tap Not sure' })
+    }
+    if (!data.waistUnsure && (data.waistCm === undefined || data.waistCm === null)) {
+      ctx.addIssue({ code: 'custom', path: ['waistCm'], message: 'Enter a measurement or tap Not sure' })
+    }
+    if (!data.hipsUnsure && (data.hipsCm === undefined || data.hipsCm === null)) {
+      ctx.addIssue({ code: 'custom', path: ['hipsCm'], message: 'Enter a measurement or tap Not sure' })
+    }
+  })
 
 export type ModelSubmission = z.infer<typeof modelSubmissionSchema>
 
-/**
- * Server-side guard that re-derives age from DOB. Use in the API route.
- */
 export function isAgeValid(dateOfBirth: string): boolean {
   return ageFromDob(dateOfBirth) >= 18
 }
 
-/**
- * Cleans the Instagram handle to a bare alphanumeric (no @, no URL prefix).
- */
 export function normalizeInstagramHandle(raw: string): string {
   return raw
     .replace(/^@/, '')
@@ -137,7 +150,6 @@ export function normalizeInstagramHandle(raw: string): string {
     .replace(/\/$/, '')
 }
 
-/** Auto-prepend https:// when given a bare host. */
 export function normalizeUrl(raw: string | null | undefined): string | null {
   if (!raw) return null
   const t = raw.trim()

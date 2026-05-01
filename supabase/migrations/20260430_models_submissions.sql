@@ -1,6 +1,8 @@
 -- =============================================================
 -- Model casting submissions table + storage bucket + RLS.
--- Separate from tfr_inquiries: different audience, different fields.
+-- Full spec: see TFR Model Casting Form build doc.
+-- age_at_submission: plain int (API-computed at insert). Postgres rejects
+-- generated cols using age(date) because age() is not immutable.
 -- =============================================================
 
 create table if not exists public.tfr_model_submissions (
@@ -11,19 +13,20 @@ create table if not exists public.tfr_model_submissions (
   full_name text not null,
   email text not null,
   phone text not null,
-  gender_identity text not null,
+  pronouns text,
+  gender_identity text,
   city text not null,
+  state_region text,
+  country text not null default 'United States',
   date_of_birth date not null,
-  -- Age locked at submission time (computed in API). Plain int so it
-  -- can be indexed; postgres rejects generated cols using age() because
-  -- age() reads now() and is therefore not immutable.
   age_at_submission int not null,
+  is_adult boolean not null,
 
-  -- Stats (always stored in cm; UI handles unit toggle)
+  -- Stats (stored in cm)
   height_cm numeric(5,2) not null,
-  bust_cm numeric(5,2) not null,
-  waist_cm numeric(5,2) not null,
-  hips_cm numeric(5,2) not null,
+  bust_cm numeric(5,2),
+  waist_cm numeric(5,2),
+  hips_cm numeric(5,2),
 
   -- Sizing
   size_tops text not null,
@@ -32,15 +35,20 @@ create table if not exists public.tfr_model_submissions (
   shoe_size_us numeric(4,1) not null,
 
   -- Appearance
-  hair_color text not null,
-  eye_color text not null,
+  hair_color text,
+  eye_color text,
+  heritage text,
 
   -- Experience
   modeling_experience text not null,
   has_agency boolean not null,
   agency_name text,
+  unions text[] default '{}',
+  special_skills text[] default '{}',
+  special_skills_notes text,
 
-  -- Photos
+  -- Markings + photos
+  markings_notes text,
   headshot_url text not null,
   fullbody_url text not null,
   profile_left_url text not null,
@@ -54,9 +62,10 @@ create table if not exists public.tfr_model_submissions (
 
   -- Availability
   travel_availability text not null,
+  earliest_available date,
 
   -- Closing
-  why_tfr text,
+  why_tfr text not null,
   how_heard text not null,
   additional_notes text,
 
@@ -66,8 +75,6 @@ create table if not exists public.tfr_model_submissions (
   internal_notes text,
   tags text[] default '{}',
   contacted_at timestamptz,
-
-  -- Honeypot
   flagged_spam boolean default false
 );
 
@@ -81,8 +88,9 @@ create index if not exists tfr_model_submissions_height_idx
   on public.tfr_model_submissions (height_cm);
 create index if not exists tfr_model_submissions_city_idx
   on public.tfr_model_submissions (city);
+create index if not exists tfr_model_submissions_state_idx
+  on public.tfr_model_submissions (state_region);
 
--- Lock down: writes go through the service role; admins read/update via session.
 revoke all on public.tfr_model_submissions from anon;
 grant select, update on public.tfr_model_submissions to authenticated;
 grant all on public.tfr_model_submissions to service_role;
@@ -100,19 +108,15 @@ create policy "authenticated update models"
   on public.tfr_model_submissions for update
   to authenticated using (true);
 
--- Storage bucket for model photos. Private read; signed URLs only.
 insert into storage.buckets (id, name, public)
   values ('tfr-model-photos', 'tfr-model-photos', false)
 on conflict (id) do nothing;
 
--- New permission keys default to true for the owner; team members
--- inherit only if they previously had no row.
 update public.admin_users
   set permissions = permissions
     || '{"view_models": true, "edit_models": true}'::jsonb
   where role = 'owner' or permissions->>'view_models' is null;
 
--- CMS seed rows for the public /models page header.
 insert into public.site_content (key, page, label, type, value, sort_order)
 values
   ('models_intro_headline', 'models', 'Models page headline', 'text',

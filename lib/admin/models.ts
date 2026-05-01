@@ -28,7 +28,7 @@ export const MODEL_STATUS_COLORS: Record<ModelStatus, string> = {
   archived: 'bg-zinc-100 text-zinc-500 border-zinc-200',
 }
 
-export const MODEL_PAGE_SIZE = 24
+export const MODEL_PAGE_SIZE = 25
 
 export interface ModelRow {
   id: string
@@ -36,22 +36,32 @@ export interface ModelRow {
   full_name: string
   email: string
   phone: string
+  pronouns: string
+  gender_identity: string | null
   city: string
+  state_region: string | null
+  country: string
   date_of_birth: string
   age_at_submission: number | null
+  is_adult: boolean | null
   height_cm: number
-  bust_cm: number
-  waist_cm: number
-  hips_cm: number
+  bust_cm: number | null
+  waist_cm: number | null
+  hips_cm: number | null
   size_tops: string
   size_bottoms: string
   size_dress_suit: string
   shoe_size_us: number
-  hair_color: string
-  eye_color: string
+  hair_color: string | null
+  eye_color: string | null
+  heritage: string | null
   modeling_experience: string
   has_agency: boolean
   agency_name: string | null
+  unions: string[] | null
+  special_skills: string[] | null
+  special_skills_notes: string | null
+  markings_notes: string | null
   headshot_url: string
   fullbody_url: string
   profile_left_url: string
@@ -61,6 +71,7 @@ export interface ModelRow {
   tiktok_handle: string | null
   portfolio_url: string | null
   travel_availability: string
+  earliest_available: string | null
   why_tfr: string | null
   how_heard: string
   additional_notes: string | null
@@ -69,31 +80,36 @@ export interface ModelRow {
   tags: string[] | null
   contacted_at: string | null
   flagged_spam: boolean | null
-  gender_identity: string | null
 }
 
 export interface ModelFilters {
   status?: ModelStatus | 'all'
   search?: string
   hasAgency?: 'yes' | 'no' | 'all'
-  hairColor?: string
-  eyeColor?: string
   travel?: string
   ageMin?: number
   ageMax?: number
   heightMinCm?: number
   heightMaxCm?: number
   city?: string
+  stateRegion?: string
   page?: number
+  /** When set, returns rows 0..exportLimit-1 (export); ignores pagination. */
+  exportLimit?: number
 }
 
 export async function fetchModelSubmissions(
   supabase: SupabaseClient,
   filters: ModelFilters,
 ): Promise<{ rows: ModelRow[]; total: number }> {
+  const exportLimit = filters.exportLimit
   const page = filters.page && filters.page > 0 ? filters.page : 1
-  const from = (page - 1) * MODEL_PAGE_SIZE
-  const to = from + MODEL_PAGE_SIZE - 1
+  const from =
+    exportLimit != null && exportLimit > 0 ? 0 : (page - 1) * MODEL_PAGE_SIZE
+  const to =
+    exportLimit != null && exportLimit > 0
+      ? Math.min(exportLimit, 10_000) - 1
+      : from + MODEL_PAGE_SIZE - 1
 
   let query = supabase
     .from('tfr_model_submissions')
@@ -107,8 +123,6 @@ export async function fetchModelSubmissions(
   }
   if (filters.hasAgency === 'yes') query = query.eq('has_agency', true)
   if (filters.hasAgency === 'no') query = query.eq('has_agency', false)
-  if (filters.hairColor && filters.hairColor !== 'all') query = query.eq('hair_color', filters.hairColor)
-  if (filters.eyeColor && filters.eyeColor !== 'all') query = query.eq('eye_color', filters.eyeColor)
   if (filters.travel && filters.travel !== 'all') query = query.eq('travel_availability', filters.travel)
   if (filters.ageMin !== undefined) query = query.gte('age_at_submission', filters.ageMin)
   if (filters.ageMax !== undefined) query = query.lte('age_at_submission', filters.ageMax)
@@ -117,6 +131,10 @@ export async function fetchModelSubmissions(
   if (filters.city && filters.city.trim()) {
     const safe = filters.city.trim().replace(/[(),%_]/g, ' ').replace(/\s+/g, ' ').trim()
     if (safe) query = query.ilike('city', `%${safe}%`)
+  }
+  if (filters.stateRegion && filters.stateRegion.trim()) {
+    const safe = filters.stateRegion.trim().replace(/[(),%_]/g, ' ').replace(/\s+/g, ' ').trim()
+    if (safe) query = query.ilike('state_region', `%${safe}%`)
   }
   if (filters.search && filters.search.trim()) {
     const safe = filters.search.trim().replace(/[(),%_]/g, ' ').replace(/\s+/g, ' ').trim()
@@ -127,6 +145,7 @@ export async function fetchModelSubmissions(
           `email.ilike.%${safe}%`,
           `instagram_handle.ilike.%${safe}%`,
           `city.ilike.%${safe}%`,
+          `state_region.ilike.%${safe}%`,
         ].join(','),
       )
     }

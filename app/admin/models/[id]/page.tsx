@@ -48,7 +48,8 @@ export default async function ModelDetailPage({ params }: PageProps) {
       </Link>
       <h1 className="text-xl font-semibold mb-1">{submission.full_name}</h1>
       <p className="text-xs text-zinc-500 mb-6">
-        Age {submission.age_at_submission ?? '—'} · {submission.city}
+        {submission.pronouns ?? '—'} · age {submission.age_at_submission ?? '—'} ·{' '}
+        {[submission.city, submission.state_region].filter(Boolean).join(', ')}
       </p>
       <ModelDetail
         submission={submission}

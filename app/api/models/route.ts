@@ -83,6 +83,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (!flaggedSpam && payload.isAdult !== true) {
+      return NextResponse.json(
+        { ok: false, error: 'You must confirm you are 18 or older.' },
+        { status: 400 },
+      )
+    }
+
     if (!flaggedSpam) {
       if (!headshot || !fullbody || !profileLeft || !profileRight) {
         return NextResponse.json(
@@ -150,34 +157,48 @@ export async function POST(req: NextRequest) {
       full_name: String(payload.fullName ?? ''),
       email: String(payload.email ?? ''),
       phone: String(payload.phone ?? ''),
+      pronouns: null,
       gender_identity:
-        payload.genderIdentity === 'Prefer to self-describe' && payload.genderIdentityOther
-          ? `Self-described: ${payload.genderIdentityOther}`
-          : String(payload.genderIdentity ?? ''),
+        payload.genderIdentity == null || payload.genderIdentity === ''
+          ? null
+          : payload.genderIdentity === 'Prefer to self-describe' && payload.genderIdentityOther
+            ? `Self-described: ${payload.genderIdentityOther}`
+            : String(payload.genderIdentity),
       city: String(payload.city ?? ''),
+      state_region: null,
+      country: 'United States',
       date_of_birth: dob,
       age_at_submission: ageFromDob(dob),
+      is_adult: true,
       height_cm: Number(payload.heightCm),
-      bust_cm: Number(payload.bustCm),
-      waist_cm: Number(payload.waistCm),
-      hips_cm: Number(payload.hipsCm),
+      bust_cm:
+        payload.bustUnsure || payload.bustCm == null
+          ? null
+          : Number(payload.bustCm),
+      waist_cm:
+        payload.waistUnsure || payload.waistCm == null
+          ? null
+          : Number(payload.waistCm),
+      hips_cm:
+        payload.hipsUnsure || payload.hipsCm == null
+          ? null
+          : Number(payload.hipsCm),
       size_tops: String(payload.sizeTops ?? ''),
       size_bottoms: String(payload.sizeBottoms ?? ''),
       size_dress_suit: String(payload.sizeDressSuit ?? ''),
       shoe_size_us: Number(payload.shoeSizeUs),
-      hair_color:
-        payload.hairColor === 'Other' && payload.hairColorOther
-          ? `Other: ${payload.hairColorOther}`
-          : String(payload.hairColor ?? ''),
-      eye_color:
-        payload.eyeColor === 'Other' && payload.eyeColorOther
-          ? `Other: ${payload.eyeColorOther}`
-          : String(payload.eyeColor ?? ''),
+      hair_color: null,
+      eye_color: null,
+      heritage: null,
       modeling_experience: String(payload.modelingExperience ?? ''),
       has_agency: !!payload.hasAgency,
       agency_name: payload.hasAgency
         ? (payload.agencyName as string | null) || null
         : null,
+      unions: [],
+      special_skills: [],
+      special_skills_notes: null,
+      markings_notes: null,
       headshot_url: slotPaths['headshot'] || '',
       fullbody_url: slotPaths['fullbody'] || '',
       profile_left_url: slotPaths['profile-left'] || '',
@@ -187,12 +208,13 @@ export async function POST(req: NextRequest) {
       tiktok_handle: tiktokHandle,
       portfolio_url: portfolio,
       travel_availability: String(payload.travelAvailability ?? ''),
-      why_tfr: (payload.whyTfr as string | null)?.trim() || null,
+      earliest_available: null,
+      why_tfr: ((payload.whyTfr as string | null) ?? '').trim() || null,
       how_heard:
         payload.howHeard === 'Other' && payload.howHeardOther
           ? `Other: ${payload.howHeardOther}`
           : String(payload.howHeard ?? ''),
-      additional_notes: (payload.additionalNotes as string | null) || null,
+      additional_notes: (payload.additionalNotes as string | null)?.trim() || null,
       flagged_spam: flaggedSpam,
     }
 
@@ -249,24 +271,23 @@ export async function POST(req: NextRequest) {
             fullName: insertRow.full_name,
             email: insertRow.email,
             phone: insertRow.phone,
-            city: insertRow.city,
+            location: insertRow.city,
+            genderIdentity: insertRow.gender_identity,
             age: insertRow.age_at_submission,
             heightCm: insertRow.height_cm,
-            bustCm: insertRow.bust_cm,
-            waistCm: insertRow.waist_cm,
-            hipsCm: insertRow.hips_cm,
+            bustCm: insertRow.bust_cm ?? null,
+            waistCm: insertRow.waist_cm ?? null,
+            hipsCm: insertRow.hips_cm ?? null,
             sizeTops: insertRow.size_tops,
             sizeBottoms: insertRow.size_bottoms,
             sizeDressSuit: insertRow.size_dress_suit,
             shoeSizeUs: insertRow.shoe_size_us,
-            hairColor: insertRow.hair_color,
-            eyeColor: insertRow.eye_color,
             modelingExperience: insertRow.modeling_experience,
             hasAgency: insertRow.has_agency,
             agencyName: insertRow.agency_name,
             instagramHandle: insertRow.instagram_handle,
             travelAvailability: insertRow.travel_availability,
-            whyTfr: insertRow.why_tfr ?? '',
+            whyTfr: insertRow.why_tfr,
             photoUrls: photoLinks,
             createdAt,
           }),

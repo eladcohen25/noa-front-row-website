@@ -70,29 +70,29 @@ export default function PageEditor({
     setSaving(true)
     const supabase = createBrowserClient()
 
-    // Send the FULL row on upsert. Postgres evaluates the INSERT branch
-    // of `INSERT … ON CONFLICT DO UPDATE` first and rejects rows that
-    // violate NOT NULL on page / label / type, even when the row already
-    // exists and the actual operation will be an UPDATE.
-    const updates = dirtyKeys.map((key) => {
-      const field = fields.find((f) => f.key === key)!
-      return {
-        key,
-        page: field.page,
-        label: field.label,
-        type: field.type,
-        description: field.description,
-        sort_order: field.sort_order,
-        required: field.required,
-        value: normalizeFieldValue(field, values[key]),
-        updated_by: userId,
+    // Never use upsert here. Postgres evaluates the INSERT branch of
+    // `INSERT … ON CONFLICT DO UPDATE` first; any missing/NULL `page`,
+    // `label`, or `type` on the payload fails NOT NULL even for keys that
+    // already exist. Per-key UPDATE matches the visual editor API and only
+    // touches `value` + `updated_by`.
+    const failures: string[] = []
+    for (const key of dirtyKeys) {
+      const field = fields.find((f) => f.key === key)
+      if (!field) {
+        failures.push(`${key} (unknown field)`)
+        continue
       }
-    })
+      const normalized = normalizeFieldValue(field, values[key])
+      const { error, count } = await supabase
+        .from('site_content')
+        .update({ value: normalized, updated_by: userId }, { count: 'exact' })
+        .eq('key', key)
+      if (error) failures.push(`${key}: ${error.message}`)
+      else if ((count ?? 0) < 1) failures.push(`${key}: no row updated — run CMS migrations`)
+    }
 
-    const { error } = await supabase.from('site_content').upsert(updates, { onConflict: 'key' })
-
-    if (error) {
-      toast.error('Save failed: ' + error.message)
+    if (failures.length > 0) {
+      toast.error('Save failed: ' + failures.join('; '))
       setSaving(false)
       return
     }

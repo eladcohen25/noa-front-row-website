@@ -1,5 +1,6 @@
 import ModelFilters from '@/components/admin/ModelFilters'
 import ModelsTable from '@/components/admin/ModelsTable'
+import ModelsToolbar from '@/components/admin/ModelsToolbar'
 import { requireUser } from '@/lib/admin/auth'
 import {
   fetchModelSubmissions,
@@ -24,14 +25,13 @@ function parse(searchParams: PageProps['searchParams']): Filters {
     status: (get('status') as ModelStatus | 'all' | undefined) ?? 'all',
     search: get('search'),
     hasAgency: (get('hasAgency') as 'yes' | 'no' | 'all' | undefined) ?? 'all',
-    hairColor: get('hairColor'),
-    eyeColor: get('eyeColor'),
     travel: get('travel'),
     ageMin: get('ageMin') ? Number(get('ageMin')) : undefined,
     ageMax: get('ageMax') ? Number(get('ageMax')) : undefined,
     heightMinCm: get('heightMin') ? Number(get('heightMin')) : undefined,
     heightMaxCm: get('heightMax') ? Number(get('heightMax')) : undefined,
     city: get('city'),
+    stateRegion: get('stateRegion'),
     page: Number(get('page')) || 1,
   }
 }
@@ -70,14 +70,7 @@ export default async function ModelsAdminPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <header className="mb-6 flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-xl font-semibold">Models</h1>
-          <p className="text-xs text-zinc-500">
-            {total} matching · all photos load via 1-hour signed URLs.
-          </p>
-        </div>
-      </header>
+      <ModelsToolbar total={total} />
 
       <ModelFilters />
 

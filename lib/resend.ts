@@ -179,24 +179,23 @@ interface ModelEmailArgs {
   fullName: string
   email: string
   phone: string
-  city: string
+  location: string
+  genderIdentity: string | null
   age: number
   heightCm: number
-  bustCm: number
-  waistCm: number
-  hipsCm: number
+  bustCm: number | null
+  waistCm: number | null
+  hipsCm: number | null
   sizeTops: string
   sizeBottoms: string
   sizeDressSuit: string
   shoeSizeUs: number
-  hairColor: string
-  eyeColor: string
   modelingExperience: string
   hasAgency: boolean
   agencyName: string | null
   instagramHandle: string
   travelAvailability: string
-  whyTfr: string
+  whyTfr: string | null
   photoUrls: { label: string; url: string }[]
   createdAt: string
 }
@@ -233,12 +232,12 @@ export function buildModelTfrEmailHtml(args: ModelEmailArgs): string {
     <table style="width:100%;border-collapse:collapse;">
       ${row('Email', args.email)}
       ${row('Phone', args.phone)}
-      ${row('Location', args.city)}
+      ${row('Location', args.location)}
+      ${args.genderIdentity ? row('Gender', args.genderIdentity) : ''}
       ${row('Height', `${cmToFt(args.heightCm)} (${args.heightCm} cm)`)}
-      ${row('Bust / Waist / Hips', `${args.bustCm} / ${args.waistCm} / ${args.hipsCm} cm`)}
+      ${row('Bust / Waist / Hips', `${args.bustCm ?? 'Not sure'} / ${args.waistCm ?? 'Not sure'} / ${args.hipsCm ?? 'Not sure'} cm`)}
       ${row('Tops / Bottoms / Dress', `${args.sizeTops} / ${args.sizeBottoms} / ${args.sizeDressSuit}`)}
       ${row('Shoe (US)', String(args.shoeSizeUs))}
-      ${row('Hair / Eye', `${args.hairColor} / ${args.eyeColor}`)}
       ${row('Agency', args.hasAgency ? args.agencyName || 'Yes' : 'No')}
       ${row('Travel', args.travelAvailability)}
       ${row('Instagram', '@' + args.instagramHandle)}
@@ -247,7 +246,7 @@ export function buildModelTfrEmailHtml(args: ModelEmailArgs): string {
       <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#999;">Experience</p>
       <p style="margin:0 0 16px;font-size:14px;color:#000;line-height:1.5;white-space:pre-wrap;">${escapeHtml(args.modelingExperience)}</p>
       ${
-        args.whyTfr.trim()
+        args.whyTfr
           ? `<p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#999;">Why TFR</p>
       <p style="margin:0 0 16px;font-size:14px;color:#000;line-height:1.5;white-space:pre-wrap;">${escapeHtml(args.whyTfr)}</p>`
           : ''

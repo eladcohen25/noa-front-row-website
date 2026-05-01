@@ -6,13 +6,12 @@ import MeasurementInput from '../Inputs/MeasurementInput'
 import MultiPhotoUpload from '../Inputs/MultiPhotoUpload'
 import ShoeInput from '../Inputs/ShoeInput'
 import CityInput from '@/components/inquiry/Inputs/CityInput'
+import MultiSelectButtons from '@/components/inquiry/Inputs/MultiSelectButtons'
 import SelectButtons from '@/components/inquiry/Inputs/SelectButtons'
 import TextArea from '@/components/inquiry/Inputs/TextArea'
 import TextInput from '@/components/inquiry/Inputs/TextInput'
 import {
-  EYE_COLORS,
   GENDER_IDENTITY_OPTIONS,
-  HAIR_COLORS,
   HOW_HEARD_OPTIONS,
   SIZE_OPTIONS,
   TRAVEL_OPTIONS,
@@ -20,8 +19,6 @@ import {
 } from '@/lib/models/schema'
 import { ageFromDob } from '@/lib/models/units'
 import type { ModelStepDef, ModelStepProps } from './types'
-
-// --- Generic field helpers ----------------------------------------------------
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -129,10 +126,6 @@ function textAreaStep(config: {
   }
 }
 
-/**
- * Single-select step. Auto-advances on tap unless the picked value is
- * the "Other" option (in which case the user types text + clicks Continue).
- */
 function selectStep<T extends string>(config: {
   key: string
   prompt: string
@@ -160,9 +153,7 @@ function selectStep<T extends string>(config: {
             }
             return updated as unknown as ModelFormStateType
           })
-          // Auto-advance unless the user picked "Other" and we still need text.
           if (!config.otherOption || next !== config.otherOption) {
-            // Wait one tick so the state update flushes before advancing.
             setTimeout(() => advance(), 0)
           }
         }}
@@ -194,8 +185,6 @@ function selectStep<T extends string>(config: {
       }
       return true
     },
-    // Hide Continue when no value yet, OR when value !== Other.
-    // Show Continue when "Other" is selected (so user can type then proceed).
     hideContinue: (state) => {
       const v = (state as unknown as Record<string, T | undefined>)[config.field]
       if (!v) return true
@@ -206,14 +195,92 @@ function selectStep<T extends string>(config: {
   }
 }
 
-// avoid `any` while still letting setState updaters return the broad shape
+function multiSelectStep<T extends string>(config: {
+  key: string
+  prompt: string
+  helper?: string
+  field: string
+  options: readonly T[]
+  otherOption?: T
+  otherField?: string
+  otherPlaceholder?: string
+  required?: boolean
+  exclusiveNone?: T
+}): ModelStepDef {
+  const required = config.required !== false
+  const noneOpt = config.exclusiveNone
+  const Component = ({ state, setState }: ModelStepProps) => {
+    const value = ((state as unknown as Record<string, T[] | undefined>)[config.field] || []) as T[]
+    const otherText = config.otherField
+      ? ((state as unknown as Record<string, string>)[config.otherField] || '')
+      : ''
+    return (
+      <MultiSelectButtons
+        options={config.options}
+        value={value}
+        onChange={(next) => {
+          setState((prev) => {
+            let fieldVal = next as T[]
+            if (noneOpt) {
+              const hasNone = fieldVal.includes(noneOpt)
+              const hadNone = ((prev as unknown as Record<string, T[]>)[config.field] || []).includes(
+                noneOpt,
+              )
+              if (hasNone && !hadNone) {
+                fieldVal = [noneOpt]
+              } else if (hasNone && fieldVal.length > 1) {
+                fieldVal = fieldVal.filter((x) => x !== noneOpt)
+              }
+            }
+            const updated = { ...prev, [config.field]: fieldVal } as Record<string, unknown>
+            if (
+              config.otherField &&
+              config.otherOption &&
+              !fieldVal.includes(config.otherOption)
+            ) {
+              updated[config.otherField] = ''
+            }
+            return updated as unknown as ModelFormStateType
+          })
+        }}
+        otherOption={config.otherOption}
+        otherText={otherText}
+        onOtherTextChange={
+          config.otherField
+            ? (text) =>
+                setState((prev) => ({
+                  ...prev,
+                  [config.otherField as string]: text,
+                }))
+            : undefined
+        }
+        otherPlaceholder={config.otherPlaceholder}
+      />
+    )
+  }
+  return {
+    key: config.key,
+    prompt: config.prompt,
+    helper: config.helper ?? 'Select all that apply',
+    isOptional: !required,
+    isValid: (state) => {
+      const v = ((state as unknown as Record<string, T[] | undefined>)[config.field] || []) as T[]
+      if (required && v.length < 1) return false
+      if (config.otherOption && config.otherField && v.includes(config.otherOption)) {
+        const text = ((state as unknown as Record<string, string>)[config.otherField] || '')
+        if (!text.trim()) return false
+      }
+      return true
+    },
+    Component,
+  }
+}
+
 type ModelFormStateType = Parameters<ModelStepProps['setState']>[0] extends (
   prev: infer P,
 ) => infer R
   ? R
   : never
-
-// --- Section 1: Identity ------------------------------------------------------
 
 const identitySteps: ModelStepDef[] = [
   textStep({
@@ -238,15 +305,39 @@ const identitySteps: ModelStepDef[] = [
     placeholder: '+1 555 555 5555',
     validate: (v) => (v.replace(/\D/g, '').length >= 7 ? null : 'Enter a valid phone number'),
   }),
-  selectStep({
+  {
     key: 'genderIdentity',
     prompt: 'How do you describe your gender?',
-    field: 'genderIdentity',
-    options: GENDER_IDENTITY_OPTIONS,
-    otherOption: 'Prefer to self-describe',
-    otherField: 'genderIdentityOther',
-    otherPlaceholder: 'Self-describe',
-  }),
+    isValid: (state) =>
+      !!state.genderIdentity &&
+      (state.genderIdentity !== 'Prefer to self-describe' ||
+        !!state.genderIdentityOther?.trim()),
+    hideContinue: (state) =>
+      !state.genderIdentity || state.genderIdentity !== 'Prefer to self-describe',
+    Component: ({ state, setState, advance }) => (
+      <SelectButtons
+        options={GENDER_IDENTITY_OPTIONS}
+        value={state.genderIdentity}
+        onChange={(next) => {
+          setState((prev) => ({
+            ...prev,
+            genderIdentity: next,
+            genderIdentityOther:
+              next !== 'Prefer to self-describe' ? '' : prev.genderIdentityOther,
+          }))
+          if (next !== 'Prefer to self-describe') {
+            setTimeout(() => advance(), 0)
+          }
+        }}
+        otherOption="Prefer to self-describe"
+        otherText={state.genderIdentityOther}
+        onOtherTextChange={(text) =>
+          setState((prev) => ({ ...prev, genderIdentityOther: text }))
+        }
+        otherPlaceholder="Self-describe"
+      />
+    ),
+  },
   {
     key: 'city',
     prompt: 'What city are you based in?',
@@ -291,7 +382,7 @@ const identitySteps: ModelStepDef[] = [
           <DateInput
             autoFocus
             value={state.dateOfBirth}
-            onChange={(v) => setState((prev) => ({ ...prev, dateOfBirth: v }))}
+            onChange={(v) => setState((prev) => ({ ...prev, dateOfBirth: v, isAdult: false }))}
             max={max}
           />
           {touched && tooYoung && (
@@ -306,9 +397,43 @@ const identitySteps: ModelStepDef[] = [
       )
     },
   },
+  {
+    key: 'isAdult',
+    prompt: 'Confirm you are 18 or older',
+    helper: 'Required',
+    isValid: (state) => state.isAdult === true,
+    Component: ({ state, setState }) => (
+      <button
+        type="button"
+        onClick={() => setState((prev) => ({ ...prev, isAdult: !prev.isAdult }))}
+        className={`flex items-center gap-4 text-left px-5 py-4 md:py-5 rounded-full border transition-all min-h-[52px] w-full ${
+          state.isAdult
+            ? 'border-black bg-black text-white'
+            : 'border-gold/60 text-black hover:border-gold hover:bg-gold/[0.06]'
+        }`}
+      >
+        <span
+          className={`flex-shrink-0 w-5 h-5 rounded-sm border flex items-center justify-center transition-colors ${
+            state.isAdult ? 'border-white bg-white' : 'border-gold/70'
+          }`}
+        >
+          {state.isAdult && (
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M2 6L5 9L10 3"
+                stroke="black"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </span>
+        <span className="text-sm md:text-base">I confirm I am 18 years of age or older.</span>
+      </button>
+    ),
+  },
 ]
-
-// --- Section 2: Stats ---------------------------------------------------------
 
 function measurementStep(
   key: string,
@@ -316,37 +441,106 @@ function measurementStep(
   field: 'heightCm' | 'bustCm' | 'waistCm' | 'hipsCm',
   variant: 'height' | 'simple',
   range: [number, number],
+  unsureField?: 'bustUnsure' | 'waistUnsure' | 'hipsUnsure',
 ): ModelStepDef {
   return {
     key,
     prompt,
     helper: variant === 'height' ? 'Toggle ft / in or cm' : 'Toggle in or cm',
     isValid: (state) => {
+      if (unsureField && (state as unknown as Record<string, boolean>)[unsureField]) {
+        return true
+      }
       const v = state[field]
       if (typeof v !== 'number') return false
       return v >= range[0] && v <= range[1]
     },
-    Component: ({ state, setState }) => (
-      <MeasurementInput
-        autoFocus
-        valueCm={state[field]}
-        onChange={(cm) => setState((prev) => ({ ...prev, [field]: cm }))}
-        variant={variant}
-        minCm={range[0]}
-        maxCm={range[1]}
-      />
-    ),
+    Component: ({ state, setState }) => {
+      const unsure = unsureField
+        ? !!(state as unknown as Record<string, boolean>)[unsureField]
+        : false
+      return (
+        <div className="space-y-4 w-full">
+          <div className={unsure ? 'opacity-40 pointer-events-none' : ''}>
+            <MeasurementInput
+              autoFocus
+              valueCm={state[field]}
+              onChange={(cm) => setState((prev) => ({ ...prev, [field]: cm }))}
+              variant={variant}
+              minCm={range[0]}
+              maxCm={range[1]}
+            />
+          </div>
+          {unsureField && (
+            <button
+              type="button"
+              onClick={() =>
+                setState((prev) => {
+                  const next = !(prev as unknown as Record<string, boolean>)[unsureField]
+                  const updated = { ...prev, [unsureField]: next } as Record<string, unknown>
+                  if (next) updated[field] = undefined
+                  return updated as unknown as ModelFormStateType
+                })
+              }
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] uppercase tracking-[0.2em] transition-colors ${
+                unsure
+                  ? 'border-black bg-black text-white'
+                  : 'border-gold/60 text-black/70 hover:border-gold hover:bg-gold/[0.06]'
+              }`}
+            >
+              <span
+                className={`w-3 h-3 rounded-sm border flex items-center justify-center ${
+                  unsure ? 'border-white bg-white' : 'border-gold/70'
+                }`}
+              >
+                {unsure && (
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M2 6L5 9L10 3"
+                      stroke="black"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </span>
+              Not sure
+            </button>
+          )}
+        </div>
+      )
+    },
   }
 }
 
 const statsSteps: ModelStepDef[] = [
   measurementStep('height', 'How tall are you?', 'heightCm', 'height', [120, 230]),
-  measurementStep('bust', 'Bust / chest measurement?', 'bustCm', 'simple', [50, 150]),
-  measurementStep('waist', 'Waist measurement?', 'waistCm', 'simple', [50, 150]),
-  measurementStep('hips', 'Hips measurement?', 'hipsCm', 'simple', [50, 150]),
+  measurementStep(
+    'bust',
+    'Bust / chest measurement?',
+    'bustCm',
+    'simple',
+    [50, 150],
+    'bustUnsure',
+  ),
+  measurementStep(
+    'waist',
+    'Waist measurement?',
+    'waistCm',
+    'simple',
+    [50, 150],
+    'waistUnsure',
+  ),
+  measurementStep(
+    'hips',
+    'Hips measurement?',
+    'hipsCm',
+    'simple',
+    [50, 150],
+    'hipsUnsure',
+  ),
 ]
-
-// --- Section 3: Sizing --------------------------------------------------------
 
 const sizingSteps: ModelStepDef[] = [
   selectStep({ key: 'sizeTops', prompt: 'Tops size?', field: 'sizeTops', options: SIZE_OPTIONS }),
@@ -378,29 +572,6 @@ const sizingSteps: ModelStepDef[] = [
   },
 ]
 
-// --- Section 4: Appearance ----------------------------------------------------
-
-const appearanceSteps: ModelStepDef[] = [
-  selectStep({
-    key: 'hairColor',
-    prompt: 'Hair color?',
-    field: 'hairColor',
-    options: HAIR_COLORS,
-    otherOption: 'Other',
-    otherField: 'hairColorOther',
-  }),
-  selectStep({
-    key: 'eyeColor',
-    prompt: 'Eye color?',
-    field: 'eyeColor',
-    options: EYE_COLORS,
-    otherOption: 'Other',
-    otherField: 'eyeColorOther',
-  }),
-]
-
-// --- Section 5: Experience ----------------------------------------------------
-
 const experienceSteps: ModelStepDef[] = [
   textAreaStep({
     key: 'modelingExperience',
@@ -412,8 +583,7 @@ const experienceSteps: ModelStepDef[] = [
     key: 'hasAgency',
     prompt: 'Are you currently represented by an agency?',
     isValid: (state) => state.hasAgency === true || state.hasAgency === false,
-    hideContinue: (state) =>
-      state.hasAgency === true || state.hasAgency === false ? true : true,
+    hideContinue: () => true,
     Component: ({ state, setState, advance }) => (
       <SelectButtons
         options={['Yes', 'No'] as const}
@@ -432,7 +602,6 @@ const experienceSteps: ModelStepDef[] = [
   {
     key: 'agencyName',
     prompt: 'What is the name of the agency?',
-    // Skipped entirely when hasAgency === false.
     isHidden: (state) => state.hasAgency !== true,
     isValid: (state) => state.agencyName.trim().length > 0,
     Component: ({ state, setState, advance }) => (
@@ -452,9 +621,7 @@ const experienceSteps: ModelStepDef[] = [
   },
 ]
 
-// --- Section 6: Photos -------------------------------------------------------
-
-const photosSteps: ModelStepDef[] = [
+const markingsPhotosSteps: ModelStepDef[] = [
   {
     key: 'photos',
     prompt: 'Upload your photos.',
@@ -489,8 +656,6 @@ const photosSteps: ModelStepDef[] = [
     ),
   },
 ]
-
-// --- Section 7: Links --------------------------------------------------------
 
 const urlValidate = (v: string) =>
   /^(https?:\/\/|www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(v) ? null : 'Enter a valid URL'
@@ -527,8 +692,6 @@ const linksSteps: ModelStepDef[] = [
   }),
 ]
 
-// --- Section 8: Availability -------------------------------------------------
-
 const availabilitySteps: ModelStepDef[] = [
   selectStep({
     key: 'travelAvailability',
@@ -537,8 +700,6 @@ const availabilitySteps: ModelStepDef[] = [
     options: TRAVEL_OPTIONS,
   }),
 ]
-
-// --- Section 9: Closing ------------------------------------------------------
 
 const closingSteps: ModelStepDef[] = [
   textAreaStep({
@@ -566,15 +727,12 @@ const closingSteps: ModelStepDef[] = [
   }),
 ]
 
-// --- Final ordered list ------------------------------------------------------
-
 export const MODEL_FORM_STEPS: ModelStepDef[] = [
   ...identitySteps,
   ...statsSteps,
   ...sizingSteps,
-  ...appearanceSteps,
   ...experienceSteps,
-  ...photosSteps,
+  ...markingsPhotosSteps,
   ...linksSteps,
   ...availabilitySteps,
   ...closingSteps,

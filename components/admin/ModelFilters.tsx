@@ -2,21 +2,20 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { EYE_COLORS, HAIR_COLORS, TRAVEL_OPTIONS } from '@/lib/models/schema'
+import { TRAVEL_OPTIONS } from '@/lib/models/schema'
 import { MODEL_STATUSES, MODEL_STATUS_LABELS } from '@/lib/admin/models'
 
 const FILTER_KEYS = [
   'status',
   'search',
   'hasAgency',
-  'hairColor',
-  'eyeColor',
   'travel',
   'ageMin',
   'ageMax',
   'heightMin',
   'heightMax',
   'city',
+  'stateRegion',
 ] as const
 
 export default function ModelFilters() {
@@ -90,24 +89,6 @@ export default function ModelFilters() {
           <option value="no">No agency</option>
         </select>
 
-        <select value={params.get('hairColor') ?? 'all'} onChange={select('hairColor')} className={inputCls}>
-          <option value="all">Any hair</option>
-          {HAIR_COLORS.map((h) => (
-            <option key={h} value={h}>
-              {h}
-            </option>
-          ))}
-        </select>
-
-        <select value={params.get('eyeColor') ?? 'all'} onChange={select('eyeColor')} className={inputCls}>
-          <option value="all">Any eye</option>
-          {EYE_COLORS.map((e) => (
-            <option key={e} value={e}>
-              {e}
-            </option>
-          ))}
-        </select>
-
         <select value={params.get('travel') ?? 'all'} onChange={select('travel')} className={inputCls}>
           <option value="all">Any travel</option>
           {TRAVEL_OPTIONS.map((t) => (
@@ -159,6 +140,13 @@ export default function ModelFilters() {
           value={params.get('city') ?? ''}
           onChange={text('city')}
           className={`${inputCls} flex-1 min-w-[140px]`}
+        />
+        <input
+          type="text"
+          placeholder="State / region contains..."
+          value={params.get('stateRegion') ?? ''}
+          onChange={text('stateRegion')}
+          className={`${inputCls} flex-1 min-w-[160px]`}
         />
 
         {hasActiveFilters && (

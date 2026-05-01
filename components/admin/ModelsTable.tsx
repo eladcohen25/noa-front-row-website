@@ -70,6 +70,7 @@ export default function ModelsTable({
               <th className="px-4 py-2.5 font-medium w-14"></th>
               <th className="px-4 py-2.5 font-medium">Name</th>
               <th className="px-4 py-2.5 font-medium">Age</th>
+              <th className="px-4 py-2.5 font-medium">Pronouns</th>
               <th className="px-4 py-2.5 font-medium">Height</th>
               <th className="px-4 py-2.5 font-medium">Location</th>
               <th className="px-4 py-2.5 font-medium">Agency</th>
@@ -98,10 +99,13 @@ export default function ModelsTable({
                   </td>
                   <td className="px-4 py-3 font-medium">{row.full_name}</td>
                   <td className="px-4 py-3 text-zinc-700">{row.age_at_submission ?? '—'}</td>
+                  <td className="px-4 py-3 text-zinc-600">{row.pronouns ?? '—'}</td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
                     {feet}&prime;{inches}&Prime; / {row.height_cm}cm
                   </td>
-                  <td className="px-4 py-3 text-zinc-600">{row.city}</td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {[row.city, row.state_region].filter(Boolean).join(', ')}
+                  </td>
                   <td className="px-4 py-3 text-zinc-600">
                     {row.has_agency ? (
                       <span className="text-emerald-700">{row.agency_name || 'Yes'}</span>
