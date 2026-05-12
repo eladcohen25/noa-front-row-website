@@ -10,9 +10,18 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Edition';
+  src: url('/EDITION_.TTF') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --font-la-foonte: 'La Foonte Sans', sans-serif;
   --font-typekit: 'IvyPresto Display', serif;
+  --font-edition: 'Edition', serif;
 }
 
 .font-typekit {
@@ -24,10 +33,22 @@
   font-style: italic;
 }
 
+.font-edition {
+  font-family: var(--font-edition);
+  letter-spacing: 0.02em;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Offset for the floating header so anchor jumps don't hide content
+     behind the fixed logo. */
+  scroll-padding-top: 7rem;
 }
 
 html,
@@ -40,6 +61,15 @@ body {
 body {
   color: #000;
   background: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Sections targeted by left-nav anchors get a top offset so the header
+   never sits on top of the section heading. */
+section[id] {
+  scroll-margin-top: 6rem;
 }
 
 /* Luxury shimmer effect for hero text - black text with shimmer */
@@ -65,6 +95,22 @@ body {
   }
 }
 
+/* Fade + slight scale entrance for fullscreen form overlay. */
+.tfr-overlay-enter {
+  animation: tfr-overlay-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes tfr-overlay-in {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* iPhone safe area utilities */
 .safe-top {
   padding-top: env(safe-area-inset-top);
@@ -80,34 +126,21 @@ body {
   .desktop-nav {
     display: none !important;
   }
-  
-  /* Mobile main content - full width, no left margin */
-  .mobile-main {
-    margin-left: 0 !important;
-    width: 100% !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+
+  /* Slightly tighter scroll offset on small screens. */
+  html {
+    scroll-padding-top: 5rem;
   }
-  
-  /* Mobile page content spacing */
-  .mobile-page-content {
-    padding-top: 5rem !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-  
-  /* Mobile 3D logo header - fixed at top */
-  .mobile-logo-header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    z-index: 100 !important;
-    padding-top: env(safe-area-inset-top) !important;
+
+  section[id] {
+    scroll-margin-top: 4.5rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *,
   *::before,
   *::after {
@@ -151,3 +184,11 @@ body {
   cursor: pointer !important;
 }
 
+/* When a fullscreen takeover (e.g. a Work case study) is mounted, hide the
+   floating site chrome so its mix-blend-mode can't bleed through and so it
+   doesn't compete with the takeover for attention. The takeover sits at
+   z-[300]; this rule is a belt-and-braces measure for chrome that uses
+   blend modes which can ignore stacking context. */
+body.tfr-fullscreen-active .tfr-floating-chrome {
+  display: none !important;
+}

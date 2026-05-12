@@ -15,7 +15,7 @@ import { contactSteps } from './Steps/ContactStep'
 import { creativeBranchSteps } from './Steps/CreativeBranch'
 import { hotelBranchSteps } from './Steps/HotelBranch'
 import { inquirerTypeStep } from './Steps/InquirerTypeStep'
-import type { InquiryFormState } from '@/lib/inquiry/types'
+import type { InquirerType, InquiryFormState } from '@/lib/inquiry/types'
 import type { StepDef } from './Steps/types'
 
 const BRANCH_STEPS: Record<NonNullable<InquiryFormState['inquirerType']>, StepDef[]> = {
@@ -26,28 +26,53 @@ const BRANCH_STEPS: Record<NonNullable<InquiryFormState['inquirerType']>, StepDe
   community: communityBranchSteps,
 }
 
-const INITIAL_STATE: InquiryFormState = {
-  inquirerType: undefined,
-  details: {},
-  contact: {},
-  files: [],
-  website: '',
-}
-
 type Phase = 'questions' | 'submitting' | 'done' | 'error'
 
-export default function InquiryForm() {
-  const [state, setState] = useState<InquiryFormState>(INITIAL_STATE)
+interface InquiryFormProps {
+  onExit?: () => void
+  /**
+   * When provided, the form skips the "What best describes you?" step and
+   * starts directly inside the matching branch. Used by the Collaborate
+   * cards (Brands, Creatives) that already know who's inquiring.
+   */
+  presetInquirerType?: InquirerType
+  /**
+   * When provided (and presetInquirerType is not), the type-selector step
+   * only shows these options. Used by the Venues card to limit the picker
+   * to Hotel + Private Club.
+   */
+  restrictTypes?: InquirerType[]
+}
+
+export default function InquiryForm({
+  onExit,
+  presetInquirerType,
+  restrictTypes,
+}: InquiryFormProps = {}) {
+  const [state, setState] = useState<InquiryFormState>(() => ({
+    inquirerType: presetInquirerType,
+    restrictTypes,
+    details: {},
+    contact: {},
+    files: [],
+    website: '',
+  }))
   const [stepIndex, setStepIndex] = useState(0)
   const [phase, setPhase] = useState<Phase>('questions')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const indexHistoryRef = useRef<number[]>([0])
 
   const steps = useMemo<StepDef[]>(() => {
+    // When the caller pre-chose the inquirer type, drop the type-selector
+    // step so the form opens directly inside the relevant branch (and so
+    // back navigation can't undo the preset).
+    if (presetInquirerType) {
+      return [...BRANCH_STEPS[presetInquirerType], ...contactSteps]
+    }
     const base = [inquirerTypeStep]
     if (!state.inquirerType) return base
     return [...base, ...BRANCH_STEPS[state.inquirerType], ...contactSteps]
-  }, [state.inquirerType])
+  }, [presetInquirerType, state.inquirerType])
 
   const currentStep = steps[stepIndex]
   const isLastQuestion = stepIndex === steps.length - 1
@@ -109,7 +134,7 @@ export default function InquiryForm() {
     <main className="bg-white relative">
       <ProgressBar current={stepIndex + 1} total={steps.length} />
       <BackButton onClick={goBack} hidden={stepIndex === 0 || phase === 'submitting'} />
-      <ExitButton hidden={phase === 'submitting'} />
+      <ExitButton hidden={phase === 'submitting'} onExit={onExit} />
 
       {/* Honeypot — hidden from users, picked up by bots */}
       <input

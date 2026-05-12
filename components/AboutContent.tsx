@@ -1,7 +1,7 @@
 'use client'
 
 import ScrollReveal from '@/components/ScrollReveal'
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const FALLBACK_IMAGE_FIRST = '/About%20Page%20Photos/TFR%20-258%20copy.jpg'
 const FALLBACK_IMAGE_SECOND = '/About%20Page%20Photos/noa%20website%20rack%20pic.jpg'
@@ -36,12 +36,28 @@ export default function AboutContent({
   dates,
 }: AboutContentProps) {
   const [imageRevealed, setImageRevealed] = useState(false)
+  const imageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setImageRevealed(true)
-    }, 3400)
-    return () => clearTimeout(timer)
+    if (typeof window === 'undefined') return
+    const node = imageRef.current
+    if (!node) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setImageRevealed(true)
+            observer.disconnect()
+            break
+          }
+        }
+      },
+      { threshold: 0.15 }
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
   }, [])
 
   const image1Src = image1 || FALLBACK_IMAGE_FIRST
@@ -66,10 +82,15 @@ export default function AboutContent({
           </p>
         </ScrollReveal>
 
-        <div className="mt-8 md:mt-10 relative left-1/2 right-1/2 w-screen -translate-x-1/2">
+        <div
+          ref={imageRef}
+          className="mt-8 md:mt-10 relative left-1/2 right-1/2 w-screen -translate-x-1/2"
+        >
           <img
             src={image1Src}
             alt="About"
+            loading="lazy"
+            decoding="async"
             className="w-full object-cover"
             style={{
               clipPath: imageRevealed ? 'inset(0 0% 0 0%)' : 'inset(0 30% 0 30%)',
@@ -102,7 +123,13 @@ export default function AboutContent({
       </div>
 
       <div className="mt-8 md:mt-10 relative left-1/2 right-1/2 w-screen -translate-x-1/2">
-        <img src={image2Src} alt="About" className="w-full object-cover" />
+        <img
+          src={image2Src}
+          alt="About"
+          loading="lazy"
+          decoding="async"
+          className="w-full object-cover"
+        />
       </div>
 
       <div className="max-w-3xl md:max-w-6xl mx-auto mt-4 md:mt-6 text-center">

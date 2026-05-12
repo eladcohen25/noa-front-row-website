@@ -18,6 +18,13 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.png" type="image/png" />
+        <link
+          rel="preload"
+          href="/EDITION_.TTF"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
         <link rel="stylesheet" href="https://use.typekit.net/kxg5xem.css" />
       </head>
       <body>

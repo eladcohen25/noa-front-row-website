@@ -105,7 +105,6 @@ export const BRAND_ACTIVATION_TYPES = [
 ] as const
 
 export const CREATIVE_ROLES = [
-  'Model',
   'Photographer',
   'Stylist',
   'Hair',
@@ -113,6 +112,7 @@ export const CREATIVE_ROLES = [
   'Director / DP',
   'Producer',
   'Designer',
+  'Media',
   'Other',
 ] as const
 

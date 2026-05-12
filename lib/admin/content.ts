@@ -54,9 +54,9 @@ export const PAGE_GROUPS: PageGroup[] = [
   },
   {
     key: 'contact',
-    label: 'Contact / Footer',
-    livePath: '/contact',
-    description: 'Page heading and the two contact cards (name, role, email, Instagram).',
+    label: 'Footer (contact)',
+    livePath: '/',
+    description: 'Email and Instagram surfaced in the site footer.',
   },
 ]
 

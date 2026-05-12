@@ -26,7 +26,11 @@ function extOf(file: File): string {
   return 'jpg'
 }
 
-export default function ModelForm() {
+interface ModelFormProps {
+  onExit?: () => void
+}
+
+export default function ModelForm({ onExit }: ModelFormProps = {}) {
   const [state, setState] = useState<ModelFormState>(INITIAL_MODEL_FORM_STATE)
   const [stepIndex, setStepIndex] = useState(0)
   const [phase, setPhase] = useState<Phase>('questions')
@@ -208,7 +212,7 @@ export default function ModelForm() {
   return (
     <main className="bg-white relative">
       <ProgressBar current={stepIndex + 1} total={steps.length} />
-      <ExitButton hidden={phase === 'submitting'} />
+      <ExitButton hidden={phase === 'submitting'} onExit={onExit} />
 
       {/* Honeypot */}
       <input

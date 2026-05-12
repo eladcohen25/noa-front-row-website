@@ -206,7 +206,7 @@ function labelForType(type: string): string {
     case 'brand':
       return 'Brand'
     case 'creative':
-      return 'Creative / Model / Beauty'
+      return 'Creative / Media / Beauty'
     case 'community':
       return 'Community'
     default:

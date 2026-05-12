@@ -1,105 +1,63 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import { usePathname } from 'next/navigation'
-import Link from 'next/link'
+import { useRouter, usePathname } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 
 export default function LogoHeader() {
+  const router = useRouter()
   const pathname = usePathname()
-  const isHome = pathname === '/'
-  // On home page, start with text visible and logo hidden
-  // On other pages, start with logo visible
-  const [showLogo, setShowLogo] = useState(!isHome)
-  const [showText, setShowText] = useState(isHome)
   const [isMobile, setIsMobile] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
 
-  // Detect mobile
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const mobileQuery = window.matchMedia('(max-width: 768px)')
-    setIsMobile(mobileQuery.matches)
-
-    const handleChange = (event: MediaQueryListEvent) => {
-      setIsMobile(event.matches)
-    }
-
-    mobileQuery.addEventListener('change', handleChange)
-    return () => mobileQuery.removeEventListener('change', handleChange)
+    const mq = window.matchMedia('(max-width: 768px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
   }, [])
 
-  // Ensure video autoplay on mobile
-  useEffect(() => {
-    if (isMobile && videoRef.current) {
-      videoRef.current.muted = true
-      videoRef.current.playsInline = true
-      videoRef.current.play().catch(() => {
-        // Autoplay blocked, fail silently
-      })
-    }
-  }, [isMobile, showLogo])
-
-  useEffect(() => {
-    // Non-home pages: always show 3D logo
-    if (!isHome) {
-      setShowLogo(true)
-      setShowText(false)
-      return
-    }
-
-    // Home page on mobile: show "THE FRONT ROW" text only
-    if (isMobile && isHome) {
-      setShowLogo(false)
-      setShowText(true)
-      return
-    }
-
-    // Home page on desktop: show text initially, logo on scroll
-    // Set initial state based on current scroll position
-    const updateVisibility = () => {
-      const threshold = 100
-      if (window.scrollY > threshold) {
-        setShowLogo(true)
-        setShowText(false)
-      } else {
-        setShowLogo(false)
-        setShowText(true)
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault()
+      if (pathname !== '/') {
+        router.push('/#home')
+        return
       }
-    }
+      const target = document.getElementById('home')
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      if (window.history.replaceState) {
+        window.history.replaceState(null, '', '/')
+      }
+    },
+    [pathname, router]
+  )
 
-    // Set initial state
-    updateVisibility()
-
-    window.addEventListener('scroll', updateVisibility)
-    return () => window.removeEventListener('scroll', updateVisibility)
-  }, [isHome, isMobile])
-
-  // On desktop non-home pages, offset to center over content area (accounting for 256px left nav)
-  const desktopOffset = !isMobile && !isHome ? 'left-[calc(50%+128px)]' : 'left-1/2'
-  
   return (
-    <div className={`absolute z-40 pointer-events-none -translate-x-1/2 ${desktopOffset} ${isMobile ? 'top-5 safe-top' : 'top-8'}`}>
-      <div className="relative flex items-center justify-center">
-        {showText && (
-          <h1 className={`font-la-foonte font-normal tracking-tight whitespace-nowrap transition-opacity duration-300 text-black ${isMobile ? 'text-base' : 'text-xl'}`}>
-            THE FRONT ROW
-          </h1>
-        )}
-        {showLogo && (
-          <Link href="/" className="pointer-events-auto cursor-pointer">
-            <video
-              ref={videoRef}
-              src="/Noa%203-D%20logo.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              className={`object-contain transition-opacity duration-300 ${isMobile ? 'w-16 h-16' : 'w-24 h-24'}`}
-            />
-          </Link>
-        )}
-      </div>
+    <div
+      className={`tfr-floating-chrome fixed z-40 left-1/2 -translate-x-1/2 pointer-events-none ${
+        isMobile ? 'top-5 safe-top' : 'top-8'
+      }`}
+      style={{ mixBlendMode: 'difference' }}
+    >
+      <a
+        href="/#home"
+        onClick={handleClick}
+        className="pointer-events-auto inline-block select-none text-white"
+        aria-label="The Front Row — return to top"
+      >
+        <span
+          className={`font-edition tracking-[0.08em] leading-none ${
+            isMobile ? 'text-3xl' : 'text-4xl md:text-5xl'
+          }`}
+        >
+          TFR
+        </span>
+      </a>
     </div>
   )
 }
-

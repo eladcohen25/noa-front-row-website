@@ -5,15 +5,24 @@ import { useState } from 'react'
 
 interface ExitButtonProps {
   hidden?: boolean
+  onExit?: () => void
 }
 
-export default function ExitButton({ hidden }: ExitButtonProps) {
+export default function ExitButton({ hidden, onExit }: ExitButtonProps) {
   const router = useRouter()
   const [confirming, setConfirming] = useState(false)
 
+  const handleLeave = () => {
+    if (onExit) {
+      onExit()
+    } else {
+      router.push('/')
+    }
+  }
+
   return (
     <div
-      className={`fixed top-4 right-4 md:top-6 md:right-6 z-40 transition-opacity ${
+      className={`fixed top-4 right-4 md:top-6 md:right-6 z-[400] transition-opacity ${
         hidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
       style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
@@ -22,7 +31,7 @@ export default function ExitButton({ hidden }: ExitButtonProps) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => router.push('/')}
+            onClick={handleLeave}
             className="text-[10px] uppercase tracking-[0.25em] py-2 px-3 rounded-full border border-black/30 hover:bg-black hover:text-white hover:border-black transition-colors"
           >
             Leave

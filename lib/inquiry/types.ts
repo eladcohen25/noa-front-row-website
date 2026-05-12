@@ -11,6 +11,12 @@ export type {
 
 export interface InquiryFormState {
   inquirerType?: 'hotel' | 'club' | 'brand' | 'creative' | 'community'
+  /**
+   * Optional UI-only filter. When set, the "What best describes you?" step
+   * only renders the listed inquirer types. Used by Collaborate cards that
+   * pre-narrow the audience (e.g. Venues → hotel + club).
+   */
+  restrictTypes?: Array<'hotel' | 'club' | 'brand' | 'creative' | 'community'>
   details: Record<string, unknown>
   contact: Partial<{
     name: string

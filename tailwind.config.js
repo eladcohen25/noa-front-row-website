@@ -9,6 +9,7 @@ module.exports = {
     extend: {
       fontFamily: {
         'la-foonte': ['var(--font-la-foonte)', 'sans-serif'],
+        'edition': ['var(--font-edition)', 'serif'],
         'sans': ['-apple-system', 'BlinkMacSystemFont', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
       },
       colors: {
@@ -22,6 +23,3 @@ module.exports = {
   },
   plugins: [],
 }
-
-
-

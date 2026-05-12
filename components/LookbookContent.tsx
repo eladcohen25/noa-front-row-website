@@ -162,7 +162,13 @@ export default function LookbookContent({
                         height: partner.size?.height ? `${partner.size.height}px` : '120px',
                       }}
                     >
-                      <Image src={partner.image} alt={partner.name} fill className="object-contain" />
+                      <Image
+                        src={partner.image}
+                        alt={partner.name}
+                        fill
+                        sizes="(max-width: 768px) 180px, 200px"
+                        className="object-contain"
+                      />
                     </div>
                     <p className="font-typekit text-sm tracking-wide text-center">{partner.name}</p>
                   </div>
@@ -178,7 +184,13 @@ export default function LookbookContent({
                         height: partner.size?.height ? `${partner.size.height}px` : '120px',
                       }}
                     >
-                      <Image src={partner.image} alt={partner.name} fill className="object-contain" />
+                      <Image
+                        src={partner.image}
+                        alt={partner.name}
+                        fill
+                        sizes="(max-width: 768px) 180px, 200px"
+                        className="object-contain"
+                      />
                     </div>
                     <p className="font-typekit text-sm tracking-wide text-center">{partner.name}</p>
                   </div>

@@ -14,7 +14,7 @@ const INQUIRER_TYPE_LABELS: Record<string, string> = {
   hotel: 'Hotel or Property',
   club: 'Private Club',
   brand: 'Brand',
-  creative: 'Creative / Model / Beauty',
+  creative: 'Creative / Media / Beauty',
   community: 'Community',
 }
 

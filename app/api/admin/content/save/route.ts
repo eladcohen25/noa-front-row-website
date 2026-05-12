@@ -10,7 +10,7 @@ const PAGE_TO_PATH: Record<string, string> = {
   about: '/about',
   services: '/services',
   fw26: '/lookbook',
-  contact: '/contact',
+  contact: '/',
 }
 
 interface Body {
